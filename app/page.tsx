@@ -251,14 +251,15 @@ export default function Landing() {
       <section className="hero">
         <div className="hero-text">
           <h1>
-            Turn AI-generated images into{" "}
+            Turn AI-generated images into
+            <br />
             <span className="accent">production-ready files</span>.
           </h1>
           <p className="sub">
             Vector paths, correct color, right resolution — the format a studio
             needs, not the one your AI tool gave you. We&apos;re building it now.
-            Get in before launch.
           </p>
+          <p className="sub-line">Get in before launch.</p>
           <div id="waitlist-hero">
             <WaitlistForm
               source="hero"

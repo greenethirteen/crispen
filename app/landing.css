@@ -159,6 +159,12 @@
   margin-left: auto;
   margin-right: auto;
 }
+.repro-landing .sub-line {
+  margin-top: 14px;
+  font-size: clamp(16px, 1.5vw, 19px);
+  font-weight: 500;
+  color: var(--ink);
+}
 .repro-landing .hero-ctas {
   margin-top: 34px;
   display: flex;

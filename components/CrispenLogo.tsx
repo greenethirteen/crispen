@@ -8,13 +8,13 @@ import { useCallback, useRef, type CSSProperties } from "react";
  * bright and legible; the focus-pull is pure CSS (see .cl in globals.css).
  */
 const LETTERS: ReadonlyArray<readonly [string, string]> = [
-  ["c", "#FF3B30"], // red
-  ["r", "#FF9500"], // orange
-  ["i", "#FFC400"], // yellow
-  ["s", "#22C55E"], // green
-  ["p", "#00AEEF"], // cyan
-  ["e", "#3B6BFF"], // blue
-  ["n", "#C74BFF"], // violet
+  ["C", "#FF3B30"], // red
+  ["R", "#FF9500"], // orange
+  ["I", "#FFC400"], // yellow
+  ["S", "#22C55E"], // green
+  ["P", "#00AEEF"], // cyan
+  ["E", "#3B6BFF"], // blue
+  ["N", "#C74BFF"], // violet
 ];
 
 export default function CrispenLogo({

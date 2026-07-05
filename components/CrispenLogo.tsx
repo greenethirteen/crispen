@@ -52,6 +52,7 @@ export default function CrispenLogo({
           {ch}
         </span>
       ))}
+      <span className="cl-tm" aria-hidden="true">™</span>
     </span>
   );
 }

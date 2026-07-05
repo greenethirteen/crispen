@@ -94,6 +94,16 @@ body {
   display: inline-block;
   will-change: filter, transform, opacity;
 }
+/* Superscript trademark mark — small, neutral, sits at the cap-top of the N */
+.cl-tm {
+  align-self: flex-start;
+  font-size: 0.26em;
+  font-weight: 600;
+  line-height: 1;
+  margin-left: 0.06em;
+  margin-top: 0.12em;
+  color: #17161a;
+}
 @keyframes cl-focus {
   from {
     filter: blur(10px);

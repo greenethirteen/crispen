@@ -255,7 +255,8 @@ export default function Landing() {
             <span className="accent">production-ready files</span>.
           </h1>
           <p className="sub">
-            Vector, CMYK, print-ready — the format studios actually accept.
+            Vector paths, correct color, right resolution — the format a studio
+            needs, not the one your AI tool gave you. We&apos;re building it now.
           </p>
           <p className="sub-line">Get in before launch.</p>
           <div id="waitlist-hero">
@@ -326,50 +327,104 @@ export default function Landing() {
         <div className="section-head">
           <span className="section-num mono">01</span>
           <h2 className="section-title">How it works</h2>
-          <span className="section-kicker">
-            Three steps to a file a studio will accept — no new tool to learn
-          </span>
+          <span className="section-kicker">Upload → press check → download</span>
         </div>
         <div
           ref={stepsRef}
-          className={`steps-wrap${stepsInView ? " in-view" : ""}`}
+          className={`flow${stepsInView ? " in-view" : ""}`}
         >
-          <div className="steps">
-            <div
-              className="step"
-              style={{ "--accent": "#F5A623" } as React.CSSProperties}
-            >
-              <span className="step-bg mono" aria-hidden="true">
-                01
+          <div
+            className="flow-step"
+            style={
+              { "--accent": "#F5A623", transitionDelay: "0.05s" } as React.CSSProperties
+            }
+          >
+            <div className="flow-visual">
+              <span className="uv-drop">
+                <span className="uv-arrow">↑</span>
               </span>
-              <span className="step-eyebrow mono">Step 01</span>
-              <h3>Upload the AI output</h3>
+              <span className="uv-file mono">artwork.png</span>
             </div>
-
-            <div
-              className="step"
-              style={{ "--accent": "#00AEEF" } as React.CSSProperties}
-            >
-              <span className="step-bg mono" aria-hidden="true">
-                02
-              </span>
-              <span className="step-eyebrow mono">Step 02</span>
-              <h3>Get the reject report</h3>
+            <div className="flow-copy">
+              <span className="flow-n mono">Step 01</span>
+              <h3>Upload the AI image</h3>
+              <p>Midjourney, DALL·E, whatever — drop it in as-is.</p>
             </div>
+          </div>
 
-            <div
-              className="step"
-              style={{ "--accent": "#E8412C" } as React.CSSProperties}
-            >
-              <span className="step-bg mono" aria-hidden="true">
-                03
+          <span
+            className="flow-arrow mono"
+            aria-hidden="true"
+            style={{ transitionDelay: "0.4s" }}
+          >
+            →
+          </span>
+
+          <div
+            className="flow-step"
+            style={
+              { "--accent": "#00AEEF", transitionDelay: "0.2s" } as React.CSSProperties
+            }
+          >
+            <div className="flow-visual cv">
+              <span className="cv-row" style={{ transitionDelay: "0.55s" }}>
+                <span className="cv-x">✕</span>
+                <s>RGB</s>
+                <span className="cv-to">→</span>
+                <b>CMYK</b>
               </span>
-              <span className="step-eyebrow mono">Step 03</span>
-              <h3>Download the production package</h3>
+              <span className="cv-row" style={{ transitionDelay: "0.7s" }}>
+                <span className="cv-x">✕</span>
+                <s>72 dpi</s>
+                <span className="cv-to">→</span>
+                <b>300 dpi</b>
+              </span>
+              <span className="cv-row" style={{ transitionDelay: "0.85s" }}>
+                <span className="cv-x">✕</span>
+                <s>Flat pixels</s>
+                <span className="cv-to">→</span>
+                <b>Vector paths</b>
+              </span>
+            </div>
+            <div className="flow-copy">
+              <span className="flow-n mono">Step 02</span>
+              <h3>We run the press check</h3>
+              <p>Every studio rejection reason, found and fixed.</p>
+            </div>
+          </div>
+
+          <span
+            className="flow-arrow mono"
+            aria-hidden="true"
+            style={{ transitionDelay: "0.55s" }}
+          >
+            →
+          </span>
+
+          <div
+            className="flow-step"
+            style={
+              { "--accent": "#E8412C", transitionDelay: "0.35s" } as React.CSSProperties
+            }
+          >
+            <div className="flow-visual dv">
+              <span className="dv-chips">
+                <span style={{ transitionDelay: "0.7s" }}>SVG</span>
+                <span style={{ transitionDelay: "0.8s" }}>PDF/X</span>
+                <span style={{ transitionDelay: "0.9s" }}>PSD</span>
+              </span>
+              <span className="dv-btn mono">↓ production-package.zip</span>
+            </div>
+            <div className="flow-copy">
+              <span className="flow-n mono">Step 03</span>
+              <h3>Download the package</h3>
+              <p>Print-ready files, in every format the studio asks for.</p>
             </div>
           </div>
         </div>
       </section>
+
+      <ProductionShowcase />
 
       <section id="problem">
         <div className="section-head">
@@ -406,8 +461,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
-      <ProductionShowcase />
 
       <section className="cta-section" id="waitlist">
         <div className="eyebrow" style={{ textAlign: "center" }}>

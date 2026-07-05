@@ -240,9 +240,8 @@ export default function Landing() {
       <nav>
         <CrispenLogo className="site-logo" />
         <div className="navlinks">
-          <a href="#problem">The problem</a>
           <a href="#how">How it works</a>
-          <a href="#studios">For studios</a>
+          <a href="#package">Under the hood</a>
         </div>
         <a href="#waitlist" className="btn">
           Get early access →
@@ -252,12 +251,11 @@ export default function Landing() {
       <section className="hero">
         <div className="hero-text">
           <h1>
-            Turn AI-generated images into{" "}
+            Turn AI-gen images into{" "}
             <span className="accent">production-ready files</span>.
           </h1>
           <p className="sub">
-            Vector paths, correct color, right resolution — the format a studio
-            needs, not the one your AI tool gave you. We&apos;re building it now.
+            Vector, CMYK, print-ready — the format studios actually accept.
           </p>
           <p className="sub-line">Get in before launch.</p>
           <div id="waitlist-hero">
@@ -266,13 +264,6 @@ export default function Landing() {
               cta="Get early access"
               onJoined={setCount}
             />
-          </div>
-          <div className="microcopy">
-            For freelancers, in-house creative teams, and studios — anyone
-            handing an AI concept to production.{" "}
-            <a href="#problem" style={{ color: "var(--red)" }}>
-              See what gets rejected ↓
-            </a>
           </div>
           {countLine ? (
             <div className="microcopy">{countLine}.</div>
@@ -353,10 +344,6 @@ export default function Landing() {
               </span>
               <span className="step-eyebrow mono">Step 01</span>
               <h3>Upload the AI output</h3>
-              <p>
-                Drop in whatever came out of Midjourney, DALL·E, or your
-                generator of choice.
-              </p>
             </div>
 
             <div
@@ -368,10 +355,6 @@ export default function Landing() {
               </span>
               <span className="step-eyebrow mono">Step 02</span>
               <h3>Get the reject report</h3>
-              <p>
-                We flag exactly what a studio would kick back — color mode,
-                resolution, missing paths — before they ever see it.
-              </p>
             </div>
 
             <div
@@ -383,10 +366,6 @@ export default function Landing() {
               </span>
               <span className="step-eyebrow mono">Step 03</span>
               <h3>Download the production package</h3>
-              <p>
-                Vector paths where the art allows it, layered file where it
-                doesn&apos;t, correct profile either way.
-              </p>
             </div>
           </div>
         </div>
@@ -405,40 +384,24 @@ export default function Landing() {
             <span className="mark">✕</span>
             <div className="reject-copy">
               <div className="head">No editable paths</div>
-              <div className="body">
-                It&apos;s a flat PNG. The studio needs to resize a logo mark for
-                a billboard and there&apos;s nothing to scale.
-              </div>
             </div>
           </div>
           <div className="reject-row">
             <span className="mark">✕</span>
             <div className="reject-copy">
               <div className="head">RGB, not CMYK</div>
-              <div className="body">
-                Looks perfect on screen, shifts on press. Print production needs
-                a proper color-managed file.
-              </div>
             </div>
           </div>
           <div className="reject-row">
             <span className="mark">✕</span>
             <div className="reject-copy">
               <div className="head">One flattened layer</div>
-              <div className="body">
-                No way to isolate the type from the artwork, or pull the
-                background out for a different format.
-              </div>
             </div>
           </div>
           <div className="reject-row">
             <span className="mark">✕</span>
             <div className="reject-copy">
               <div className="head">72dpi at OOH scale</div>
-              <div className="body">
-                Fine for a Slack preview. Pixelates the moment it goes up on a
-                wall four metres wide.
-              </div>
             </div>
           </div>
         </div>
@@ -446,48 +409,12 @@ export default function Landing() {
 
       <ProductionShowcase />
 
-      <section id="studios" className="studios dark">
-        <div className="section-head">
-          <span className="section-num mono">03</span>
-          <h2 className="section-title">
-            Not just freelance handoffs — in-house too
-          </h2>
-          <span className="section-kicker">
-            Agencies generate AI concepts internally. Same problem, no
-            freelancer in the middle.
-          </span>
-        </div>
-        <div className="quote-grid">
-          <blockquote>
-            &quot;Half our freelance rejections are the same three format issues.
-            We just want a checkbox that says it&apos;s actually
-            deliverable.&quot;
-            <div className="cite">— Studio manager, mid-size agency</div>
-          </blockquote>
-          <blockquote>
-            &quot;Our own creatives generate the concept in Midjourney. Then it
-            sits for a day because nobody can turn it into something print can
-            use.&quot;
-            <div className="cite">— ECD, in-house creative team</div>
-          </blockquote>
-          <blockquote>
-            &quot;I don&apos;t need the freelancer to know Illustrator. I need the
-            file to open correctly the first time.&quot;
-            <div className="cite">— Art buyer, independent agency</div>
-          </blockquote>
-        </div>
-      </section>
-
       <section className="cta-section" id="waitlist">
         <div className="eyebrow" style={{ textAlign: "center" }}>
-          Pre-release — get in before launch
+          Pre-release
         </div>
-        <h2>Be first in line when the production package ships.</h2>
-        <p className="sub">
-          We&apos;re building the full press check and conversion pipeline now.
-          Leave your email and you&apos;ll be among the first to try it — one
-          email when it&apos;s ready, nothing else.
-        </p>
+        <h2>Be first when it ships.</h2>
+        <p className="sub">One email at launch. Nothing else.</p>
         <WaitlistForm source="cta" cta="Notify me" onJoined={setCount} />
         <div className="count">{countLine}</div>
       </section>

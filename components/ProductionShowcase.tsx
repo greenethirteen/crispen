@@ -133,10 +133,6 @@ export default function ProductionShowcase() {
               <span className="scale-inf">∞</span>
             </div>
             <h3>Vector, never pixels</h3>
-            <p>
-              Real editable paths — resize a logo mark from a business card to a
-              four-metre billboard with zero loss of sharpness.
-            </p>
           </article>
 
           <article className="spec">
@@ -147,10 +143,6 @@ export default function ProductionShowcase() {
               <span className="plate k" />
             </div>
             <h3>CMYK, colour-managed</h3>
-            <p>
-              Press-accurate colour with an embedded ICC profile. What you sign
-              off on the proof is what comes off the press.
-            </p>
           </article>
 
           <article className="spec">
@@ -159,10 +151,6 @@ export default function ProductionShowcase() {
               <span className="dpi-unit mono">DPI</span>
             </div>
             <h3>Print-grade resolution</h3>
-            <p>
-              300 DPI at final size, or resolution-independent vector — no
-              pixelation the moment it goes up on a wall.
-            </p>
           </article>
 
           <article className="spec">
@@ -172,10 +160,6 @@ export default function ProductionShowcase() {
               <span className="layer l3" />
             </div>
             <h3>Separated layers</h3>
-            <p>
-              Type, artwork and background isolated on their own layers — pull
-              any element for a new format without a recut.
-            </p>
           </article>
         </div>
       </div>

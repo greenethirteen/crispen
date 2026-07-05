@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import CrispenLogo from "../components/CrispenLogo";
 import "./landing.css";
 
@@ -53,6 +54,7 @@ function WaitlistForm({
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  const router = useRouter();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,19 +74,16 @@ function WaitlistForm({
       const data = await res.json();
       if (!res.ok) {
         setMsg({ text: data?.error ?? "Something went wrong.", ok: false });
+        setBusy(false);
       } else {
-        setMsg({
-          text: data.already
-            ? "You're already on the list — we'll be in touch."
-            : "You're in. We'll email you the moment it ships.",
-          ok: true,
-        });
-        setEmail("");
         if (typeof data.count === "number") onJoined(data.count);
+        // Navigate to the dedicated confirmation URL — this is the page Google
+        // Ads (and any other tracker) keys the "lead form submitted" conversion
+        // on. Keep `busy` true so the button stays disabled through the redirect.
+        router.push("/thanks");
       }
     } catch {
       setMsg({ text: "Network error — try again in a moment.", ok: false });
-    } finally {
       setBusy(false);
     }
   };

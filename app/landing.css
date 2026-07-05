@@ -636,6 +636,44 @@
   color: var(--gray);
 }
 
+/* ===== Thanks / confirmation page ===== */
+.repro-landing .thanks {
+  min-height: 62vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 18px;
+  padding: 80px 5vw;
+}
+.repro-landing .thanks-mark {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  font-weight: 700;
+}
+.repro-landing .thanks h1 {
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.repro-landing .thanks p {
+  color: var(--gray);
+  font-size: 17px;
+  line-height: 1.5;
+  max-width: 46ch;
+}
+.repro-landing .thanks .btn {
+  margin-top: 10px;
+}
+
 .repro-landing footer {
   border-top: 1px solid var(--line);
   padding: 28px 5vw;

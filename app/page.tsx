@@ -261,19 +261,19 @@ export default function Landing() {
             needs, not the one your AI tool gave you. We&apos;re building it now.
             Get in before launch.
           </p>
-          <div className="microcopy">
-            For freelancers, in-house creative teams, and studios — anyone
-            handing an AI concept to production.{" "}
-            <a href="#problem" style={{ color: "var(--red)" }}>
-              See what gets rejected ↓
-            </a>
-          </div>
           <div id="waitlist-hero">
             <WaitlistForm
               source="hero"
               cta="Get early access"
               onJoined={setCount}
             />
+          </div>
+          <div className="microcopy">
+            For freelancers, in-house creative teams, and studios — anyone
+            handing an AI concept to production.{" "}
+            <a href="#problem" style={{ color: "var(--red)" }}>
+              See what gets rejected ↓
+            </a>
           </div>
           {countLine ? (
             <div className="microcopy">{countLine}.</div>

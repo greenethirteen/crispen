@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "find .next/cache -mindepth 1 -delete 2>/dev/null || true",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

@@ -97,11 +97,11 @@ body {
 /* Superscript trademark mark — small, neutral, sits at the cap-top of the N */
 .cl-tm {
   align-self: flex-start;
-  font-size: 0.26em;
+  font-size: 0.42em;
   font-weight: 600;
   line-height: 1;
-  margin-left: 0.06em;
-  margin-top: 0.12em;
+  margin-left: 0.05em;
+  margin-top: 0.06em;
   color: #17161a;
 }
 @keyframes cl-focus {

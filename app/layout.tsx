@@ -23,7 +23,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Crispen",
+  title: "Crispen™",
   description:
     "Check and convert AI-generated images into production-ready files for agencies and studios.",
 };

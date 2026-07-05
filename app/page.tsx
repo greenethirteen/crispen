@@ -323,6 +323,8 @@ export default function Landing() {
 
       </section>
 
+      <ProductionShowcase />
+
       <section id="how" className="dark">
         <div className="section-head">
           <span className="section-num mono">01</span>
@@ -428,8 +430,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
-      <ProductionShowcase />
 
       <section id="problem">
         <div className="section-head">

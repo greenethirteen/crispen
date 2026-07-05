@@ -129,6 +129,19 @@ export default function ProductionShowcase() {
         {/* ---------- Spec cards ---------- */}
         <div className="specs">
           <article className="spec">
+            <div className="spec-visual layers-viz">
+              <span className="layer l1" />
+              <span className="layer l2" />
+              <span className="layer l3" />
+            </div>
+            <h3>Separated layers</h3>
+            <p>
+              Type, artwork and background isolated on their own layers — pull
+              any element for a new format without a recut.
+            </p>
+          </article>
+
+          <article className="spec">
             <div className="spec-visual scale-viz">
               <span className="scale-inf">∞</span>
             </div>
@@ -162,19 +175,6 @@ export default function ProductionShowcase() {
             <p>
               300 DPI at final size, or resolution-independent vector — no
               pixelation the moment it goes up on a wall.
-            </p>
-          </article>
-
-          <article className="spec">
-            <div className="spec-visual layers-viz">
-              <span className="layer l1" />
-              <span className="layer l2" />
-              <span className="layer l3" />
-            </div>
-            <h3>Separated layers</h3>
-            <p>
-              Type, artwork and background isolated on their own layers — pull
-              any element for a new format without a recut.
             </p>
           </article>
         </div>

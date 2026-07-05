@@ -72,7 +72,7 @@ export default function ProductionShowcase() {
     >
       <div className="section-head">
         <span className="section-num mono">◆</span>
-        <h2 className="section-title">Inside the production package</h2>
+        <h2 className="section-title">Under the hood</h2>
         <span className="section-kicker">
           What actually ships the moment your art is deliverable
         </span>

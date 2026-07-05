@@ -167,11 +167,7 @@
   letter-spacing: -0.03em;
 }
 .repro-landing h1 .accent {
-  background: var(--spectrum);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: var(--red);
 }
 .repro-landing .sub {
   margin-top: 24px;
@@ -603,6 +599,9 @@
 }
 .repro-landing #package .section-num {
   color: var(--red);
+}
+.repro-landing #package .section-title {
+  font-size: clamp(32px, 4.4vw, 54px);
 }
 
 /* ===== How-it-works step cards (redesigned) ===== */

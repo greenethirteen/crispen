@@ -334,10 +334,10 @@ export default function Landing() {
       <section id="how" className="dark">
         <div className="section-head">
           <span className="section-num mono">01</span>
-          <h2 className="section-title">
-            Three steps to a file a studio will accept
-          </h2>
-          <span className="section-kicker">No new tool to learn on set</span>
+          <h2 className="section-title">How it works</h2>
+          <span className="section-kicker">
+            Three steps to a file a studio will accept — no new tool to learn
+          </span>
         </div>
         <div
           ref={stepsRef}
@@ -350,20 +350,6 @@ export default function Landing() {
             >
               <span className="step-bg mono" aria-hidden="true">
                 01
-              </span>
-              <span className="step-icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 15V4" />
-                  <path d="M8 8l4-4 4 4" />
-                  <path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />
-                </svg>
               </span>
               <span className="step-eyebrow mono">Step 01</span>
               <h3>Upload the AI output</h3>
@@ -380,20 +366,6 @@ export default function Landing() {
               <span className="step-bg mono" aria-hidden="true">
                 02
               </span>
-              <span className="step-icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M8 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" />
-                  <rect x="8" y="2" width="8" height="4" rx="1" />
-                  <path d="M9 13l2 2 4-4" />
-                </svg>
-              </span>
               <span className="step-eyebrow mono">Step 02</span>
               <h3>Get the reject report</h3>
               <p>
@@ -408,20 +380,6 @@ export default function Landing() {
             >
               <span className="step-bg mono" aria-hidden="true">
                 03
-              </span>
-              <span className="step-icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M21 8l-9-5-9 5v8l9 5 9-5V8z" />
-                  <path d="M3.3 8L12 13l8.7-5" />
-                  <path d="M12 22V13" />
-                </svg>
               </span>
               <span className="step-eyebrow mono">Step 03</span>
               <h3>Download the production package</h3>

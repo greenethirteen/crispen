@@ -255,8 +255,8 @@ export default function Landing() {
             <span className="accent">production-ready files</span>.
           </h1>
           <p className="sub">
-            Vector paths, correct color, right resolution — the format a studio
-            needs, not the one your AI tool gave you. We&apos;re building it now.
+            Editable vector paths, CMYK color, 300&nbsp;DPI — production files
+            studios accept.
           </p>
           <p className="sub-line">Get in before launch.</p>
           <div id="waitlist-hero">

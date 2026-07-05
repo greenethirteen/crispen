@@ -94,34 +94,40 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: var(--ink);
-  color: var(--paper);
-  border: 1.5px solid var(--ink);
-  padding: 12px 20px;
+  color: #fff;
+  border: none;
+  background: linear-gradient(120deg, #ff3b30, #c74bff);
+  background-size: 170% 170%;
+  background-position: 0% 50%;
+  padding: 13px 22px;
+  border-radius: 9px;
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
+  box-shadow: 0 10px 26px -12px rgba(199, 75, 255, 0.55);
   transition:
-    transform 0.15s ease,
-    background 0.15s ease,
-    color 0.15s ease;
+    background-position 0.45s ease,
+    transform 0.18s ease,
+    box-shadow 0.25s ease;
 }
 .repro-landing .btn:hover {
-  background: var(--red);
-  border-color: var(--red);
-  color: #fff;
+  background-position: 100% 50%;
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px -12px rgba(199, 75, 255, 0.7);
 }
 .repro-landing .btn:active {
-  transform: scale(0.97);
+  transform: translateY(0) scale(0.98);
 }
 .repro-landing .btn.outline {
   background: transparent;
   color: var(--ink);
+  border: 1.5px solid var(--ink);
+  box-shadow: none;
 }
 .repro-landing .btn.outline:hover {
   background: var(--ink);
-  border-color: var(--ink);
   color: var(--paper);
+  transform: translateY(-2px);
 }
 
 /* ===== Hero (white, centered, minimal) ===== */
@@ -161,10 +167,13 @@
   background: var(--line);
 }
 .repro-landing h1 {
-  font-size: clamp(44px, 7.2vw, 92px);
+  font-size: clamp(50px, 8.5vw, 96px);
   font-weight: 700;
-  line-height: 0.98;
-  letter-spacing: -0.035em;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 .repro-landing h1 .accent {
   color: var(--red);
@@ -520,36 +529,77 @@
   opacity: 1;
 }
 
-/* step 1 — upload dropzone */
-.repro-landing .uv-drop {
-  width: 74px;
-  height: 74px;
-  border: 1.5px dashed rgba(237, 234, 224, 0.4);
-  border-radius: 14px;
+/* step 1 — an AI image uploading */
+.repro-landing .uv-card {
+  width: 176px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 22px 44px -26px rgba(0, 0, 0, 0.8);
+}
+.repro-landing .uv-thumb {
+  height: 88px;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 28% 30%, #ff9500, transparent 52%),
+    radial-gradient(circle at 74% 34%, #c74bff, transparent 52%),
+    radial-gradient(circle at 55% 82%, #00aeef, transparent 58%),
+    radial-gradient(circle at 20% 78%, #ff3b30, transparent 50%),
+    #1a1920;
+}
+.repro-landing .uv-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 58%
+  );
+  transform: translateX(-130%);
+}
+.repro-landing .flow.in-view .uv-thumb::after {
+  animation: uv-shimmer 2.6s ease 0.9s infinite;
+}
+@keyframes uv-shimmer {
+  to {
+    transform: translateX(130%);
+  }
+}
+.repro-landing .uv-meta {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px 3px 2px;
 }
-.repro-landing .uv-arrow {
-  font-size: 26px;
-  color: var(--amber);
-  animation: uv-bob 2.2s ease-in-out infinite;
-}
-@keyframes uv-bob {
-  0%,
-  100% {
-    transform: translateY(3px);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-.repro-landing .uv-file {
+.repro-landing .uv-name {
   font-size: 11px;
-  padding: 5px 12px;
+  color: rgba(237, 234, 224, 0.75);
+}
+.repro-landing .uv-bar {
+  height: 4px;
   border-radius: 100px;
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(237, 234, 224, 0.7);
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+.repro-landing .uv-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 100px;
+  background: var(--amber);
+}
+.repro-landing .flow.in-view .uv-fill {
+  animation: uv-upload 1.6s cubic-bezier(0.3, 0.7, 0.3, 1) 0.6s forwards;
+}
+@keyframes uv-upload {
+  to {
+    width: 100%;
+  }
 }
 
 /* step 2 — press-check readout */
@@ -1099,7 +1149,11 @@
     opacity: 1;
     transform: none;
   }
-  .repro-landing .uv-arrow {
+  .repro-landing .uv-thumb::after {
+    animation: none;
+  }
+  .repro-landing .uv-fill {
+    width: 100%;
     animation: none;
   }
   .repro-landing .spec::before {
@@ -1128,16 +1182,20 @@
 }
 .repro-landing .waitlist-form {
   margin: 36px auto 0;
-  max-width: 460px;
+  max-width: 480px;
   display: flex;
-  gap: 0;
+  align-items: center;
+  gap: 6px;
   border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  padding: 5px 5px 5px 6px;
+  background: var(--paper);
 }
 .repro-landing .waitlist-form input[type="email"] {
   flex: 1;
   border: none;
   background: transparent;
-  padding: 14px 16px;
+  padding: 11px 12px;
   font-family: var(--font-plex-mono), monospace;
   font-size: 14px;
   color: var(--ink);
@@ -1150,18 +1208,48 @@
 }
 .repro-landing .waitlist-form button {
   border: none;
-  background: var(--ink);
-  color: var(--paper);
-  padding: 0 22px;
+  color: #fff;
+  background: linear-gradient(120deg, #ff3b30, #c74bff);
+  background-size: 170% 170%;
+  background-position: 0% 50%;
+  padding: 12px 20px;
+  border-radius: 8px;
   font-family: var(--font-plex-mono), monospace;
   font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-position 0.45s ease,
+    transform 0.18s ease;
 }
 .repro-landing .waitlist-form button:hover {
-  background: var(--red);
+  background-position: 100% 50%;
+  transform: translateY(-1px);
+}
+.repro-landing .waitlist-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+/* Mobile: the hero form is right there, so drop the nav CTA; stack the form */
+@media (max-width: 720px) {
+  .repro-landing nav > .btn {
+    display: none;
+  }
+}
+@media (max-width: 560px) {
+  .repro-landing .waitlist-form {
+    flex-wrap: wrap;
+  }
+  .repro-landing .waitlist-form input[type="email"] {
+    flex: 1 1 100%;
+  }
+  .repro-landing .waitlist-form button {
+    flex: 1 1 100%;
+    text-align: center;
+  }
 }
 .repro-landing .waitlist-msg {
   margin-top: 14px;

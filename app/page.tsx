@@ -255,8 +255,7 @@ export default function Landing() {
             <span className="accent">production-ready files</span>.
           </h1>
           <p className="sub">
-            Vector paths, correct color, right resolution — the format a studio
-            needs, not the one your AI tool gave you. We&apos;re building it now.
+            The format studios accept — not what your AI tool gave you.
           </p>
           <p className="sub-line">Get in before launch.</p>
           <div id="waitlist-hero">
@@ -323,6 +322,8 @@ export default function Landing() {
 
       </section>
 
+      <ProductionShowcase />
+
       <section id="how" className="dark">
         <div className="section-head">
           <span className="section-num mono">01</span>
@@ -339,11 +340,16 @@ export default function Landing() {
               { "--accent": "#F5A623", transitionDelay: "0.05s" } as React.CSSProperties
             }
           >
-            <div className="flow-visual">
-              <span className="uv-drop">
-                <span className="uv-arrow">↑</span>
-              </span>
-              <span className="uv-file mono">artwork.png</span>
+            <div className="flow-visual uv">
+              <div className="uv-card">
+                <div className="uv-thumb" aria-hidden="true" />
+                <div className="uv-meta">
+                  <span className="uv-name mono">midjourney.png</span>
+                  <span className="uv-bar">
+                    <span className="uv-fill" />
+                  </span>
+                </div>
+              </div>
             </div>
             <div className="flow-copy">
               <span className="flow-n mono">Step 01</span>
@@ -423,8 +429,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
-      <ProductionShowcase />
 
       <section id="problem">
         <div className="section-head">

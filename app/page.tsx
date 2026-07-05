@@ -255,7 +255,8 @@ export default function Landing() {
             <span className="accent">production-ready files</span>.
           </h1>
           <p className="sub">
-            The format studios accept — not what your AI tool gave you.
+            Vector paths, correct color, right resolution — the format a studio
+            needs, not the one your AI tool gave you. We&apos;re building it now.
           </p>
           <p className="sub-line">Get in before launch.</p>
           <div id="waitlist-hero">
@@ -321,8 +322,6 @@ export default function Landing() {
         </div>
 
       </section>
-
-      <ProductionShowcase />
 
       <section id="how" className="dark">
         <div className="section-head">
@@ -429,6 +428,8 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      <ProductionShowcase />
 
       <section id="problem">
         <div className="section-head">

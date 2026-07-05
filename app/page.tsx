@@ -261,6 +261,13 @@ export default function Landing() {
             needs, not the one your AI tool gave you. We&apos;re building it now.
             Get in before launch.
           </p>
+          <div className="microcopy">
+            For freelancers, in-house creative teams, and studios — anyone
+            handing an AI concept to production.{" "}
+            <a href="#problem" style={{ color: "var(--red)" }}>
+              See what gets rejected ↓
+            </a>
+          </div>
           <div id="waitlist-hero">
             <WaitlistForm
               source="hero"
@@ -323,15 +330,6 @@ export default function Landing() {
           </div>
         </div>
 
-        <div className="hero-text" style={{ marginTop: 40, marginBottom: 0 }}>
-          <div className="microcopy">
-            For freelancers, in-house creative teams, and studios — anyone
-            handing an AI concept to production.{" "}
-            <a href="#problem" style={{ color: "var(--red)" }}>
-              See what gets rejected ↓
-            </a>
-          </div>
-        </div>
       </section>
 
       <section id="how" className="dark">

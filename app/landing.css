@@ -1213,23 +1213,6 @@
   cursor: default;
 }
 /* Mobile: the hero form is right there, so drop the nav CTA; stack the form */
-@media (max-width: 720px) {
-  .repro-landing nav > .btn {
-    display: none;
-  }
-}
-@media (max-width: 560px) {
-  .repro-landing .waitlist-form {
-    flex-wrap: wrap;
-  }
-  .repro-landing .waitlist-form input[type="email"] {
-    flex: 1 1 100%;
-  }
-  .repro-landing .waitlist-form button {
-    flex: 1 1 100%;
-    text-align: center;
-  }
-}
 .repro-landing .waitlist-msg {
   margin-top: 14px;
   font-family: var(--font-plex-mono), monospace;

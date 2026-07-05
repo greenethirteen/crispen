@@ -251,8 +251,7 @@ export default function Landing() {
       <section className="hero">
         <div className="hero-text">
           <h1>
-            Turn AI-generated images into
-            <br />
+            Turn AI-generated images into{" "}
             <span className="accent">production-ready files</span>.
           </h1>
           <p className="sub">

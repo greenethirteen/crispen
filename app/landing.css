@@ -1,0 +1,656 @@
+/* Landing page styles — scoped under .repro-landing so nothing leaks into the
+   /app tool. Ultra-minimal white theme: white ground, ink type, red logo as the
+   single brand accent. Fonts come from next/font via the CSS variables. */
+
+.repro-landing {
+  --paper: #ffffff;
+  --ink: #17161a;
+  --red: #e8412c;
+  --cyan: #00aeef;
+  --amber: #f5a623;
+  --gray: #86807a;
+  --line: rgba(23, 22, 26, 0.12);
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-space-grotesk), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.repro-landing *,
+.repro-landing *::before,
+.repro-landing *::after {
+  box-sizing: border-box;
+}
+
+.repro-landing .mono {
+  font-family: var(--font-plex-mono), monospace;
+}
+.repro-landing a {
+  color: inherit;
+}
+
+/* ===== Nav ===== */
+.repro-landing nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 26px 5vw;
+  border-bottom: 1px solid var(--line);
+}
+.repro-landing .site-logo {
+  font-size: clamp(30px, 4.6vw, 50px);
+}
+.repro-landing .navlinks {
+  display: flex;
+  gap: 32px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.repro-landing .navlinks a {
+  text-decoration: none;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.repro-landing .navlinks a:hover {
+  opacity: 1;
+}
+.repro-landing .navlinks a:focus-visible,
+.repro-landing .btn:focus-visible,
+.repro-landing input:focus-visible,
+.repro-landing button:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 3px;
+}
+@media (max-width: 720px) {
+  .repro-landing .navlinks {
+    display: none;
+  }
+}
+
+.repro-landing .btn {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1.5px solid var(--ink);
+  padding: 12px 20px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.repro-landing .btn:hover {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+.repro-landing .btn:active {
+  transform: scale(0.97);
+}
+.repro-landing .btn.outline {
+  background: transparent;
+  color: var(--ink);
+}
+.repro-landing .btn.outline:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+/* ===== Hero (white, centered, minimal) ===== */
+.repro-landing .hero {
+  background: var(--paper);
+  color: var(--ink);
+  padding: 88px 5vw 96px;
+  position: relative;
+}
+.repro-landing .hero-text {
+  position: relative;
+  z-index: 1;
+  max-width: 920px;
+  margin: 0 auto 64px;
+  text-align: center;
+}
+.repro-landing .eyebrow {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--red);
+  font-weight: 600;
+  margin-bottom: 22px;
+}
+.repro-landing .hero-text .eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.repro-landing .hero-text .eyebrow::before,
+.repro-landing .hero-text .eyebrow::after {
+  content: "";
+  width: 24px;
+  height: 1px;
+  background: var(--line);
+}
+.repro-landing h1 {
+  font-size: clamp(40px, 6vw, 76px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.repro-landing h1 .accent {
+  color: var(--red);
+}
+.repro-landing .sub {
+  margin-top: 24px;
+  font-size: clamp(17px, 1.6vw, 21px);
+  line-height: 1.5;
+  color: rgba(23, 22, 26, 0.6);
+  max-width: 52ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+.repro-landing .hero-ctas {
+  margin-top: 34px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.repro-landing .microcopy {
+  margin-top: 20px;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 12px;
+  color: var(--gray);
+}
+
+/* ===== Zoom demo — light restyle ===== */
+.repro-landing .demo-stage {
+  position: relative;
+  z-index: 1;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+.repro-landing .demo-card {
+  background: #0e0d10;
+  padding: 28px;
+  position: relative;
+  border: 1px solid rgba(237, 234, 224, 0.12);
+  box-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.5);
+}
+.repro-landing .crop {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  z-index: 2;
+  pointer-events: none;
+}
+.repro-landing .crop::before,
+.repro-landing .crop::after {
+  content: "";
+  position: absolute;
+  background: rgba(237, 234, 224, 0.35);
+}
+.repro-landing .crop::before {
+  width: 100%;
+  height: 1px;
+  top: 50%;
+}
+.repro-landing .crop::after {
+  width: 1px;
+  height: 100%;
+  left: 50%;
+}
+.repro-landing .crop.tl {
+  top: -9px;
+  left: -9px;
+}
+.repro-landing .crop.tr {
+  top: -9px;
+  right: -9px;
+}
+.repro-landing .crop.bl {
+  bottom: -9px;
+  left: -9px;
+}
+.repro-landing .crop.br {
+  bottom: -9px;
+  right: -9px;
+}
+.repro-landing .demo-label {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11.5px;
+  color: var(--paper);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.repro-landing .demo-label .live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cyan);
+}
+.repro-landing .demo-label .live .blip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  animation: repro-blip 1.8s ease-in-out infinite;
+}
+@keyframes repro-blip {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.repro-landing .demo-canvas-wrap {
+  background:
+    radial-gradient(ellipse at center, rgba(255, 255, 255, 0.04), transparent 70%),
+    repeating-conic-gradient(#201f24 0% 25%, #17161a 0% 50%) 50% / 20px 20px;
+  aspect-ratio: 21 / 10;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(237, 234, 224, 0.1);
+}
+.repro-landing canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.repro-landing .demo-controls {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.repro-landing .demo-controls input[type="range"] {
+  flex: 1;
+  accent-color: var(--cyan);
+  cursor: pointer;
+  height: 2px;
+}
+.repro-landing .demo-tag {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 9px;
+  background: var(--red);
+  color: white;
+  z-index: 2;
+}
+.repro-landing .demo-tag.vector {
+  left: auto;
+  right: 16px;
+  background: var(--cyan);
+  color: #0e0d10;
+}
+.repro-landing .demo-caption {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11px;
+  color: rgba(237, 234, 224, 0.4);
+}
+@media (max-width: 640px) {
+  .repro-landing .demo-card {
+    padding: 16px;
+  }
+  .repro-landing .demo-canvas-wrap {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* ===== Section shell ===== */
+.repro-landing section {
+  padding: 80px 5vw;
+}
+.repro-landing .section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 44px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 20px;
+}
+.repro-landing .section-num {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 13px;
+  color: var(--red);
+  font-weight: 600;
+}
+.repro-landing .section-title {
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.repro-landing .section-kicker {
+  margin-left: auto;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 12px;
+  color: var(--gray);
+  text-align: right;
+  max-width: 32ch;
+}
+@media (max-width: 720px) {
+  .repro-landing .section-kicker {
+    display: none;
+  }
+}
+
+/* ===== Reject list ===== */
+.repro-landing .rejects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--line);
+}
+@media (max-width: 800px) {
+  .repro-landing .rejects {
+    grid-template-columns: 1fr;
+  }
+}
+.repro-landing .reject-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.repro-landing .rejects .reject-row:nth-child(odd) {
+  border-right: 1px solid var(--line);
+}
+@media (max-width: 800px) {
+  .repro-landing .rejects .reject-row:nth-child(odd) {
+    border-right: none;
+  }
+}
+.repro-landing .mark {
+  font-family: var(--font-plex-mono), monospace;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--red);
+  flex-shrink: 0;
+  width: 20px;
+}
+.repro-landing .reject-copy .head {
+  font-weight: 600;
+  font-size: 15.5px;
+  margin-bottom: 4px;
+}
+.repro-landing .reject-copy .body {
+  font-size: 14px;
+  color: var(--gray);
+  line-height: 1.5;
+}
+
+/* ===== How it works — connected flow ===== */
+.repro-landing .steps-wrap {
+  position: relative;
+  padding-top: 6px;
+}
+.repro-landing .steps-line {
+  position: absolute;
+  /* Aligned to the circle's vertical center: 6px wrap padding + 29px (half of
+     the 58px circle). Keeps the connector running dead-center through each. */
+  top: 35px;
+  /* Circles are left-aligned in their columns, so the connector runs from the
+     center of circle 01 to the center of circle 03 — not the column centers.
+     Left = circle radius (29px). Right = one column width minus that radius,
+     where a column is (100% − two 56px gaps) / 3. */
+  left: 29px;
+  right: calc((100% - 112px) / 3 - 29px);
+  height: 1px;
+  background: var(--line);
+}
+.repro-landing .steps-line-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 1px;
+  width: 0%;
+  background: var(--red);
+  transition: width 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.repro-landing .steps-wrap.in-view .steps-line-fill {
+  width: 100%;
+}
+.repro-landing .steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 56px;
+  position: relative;
+  z-index: 1;
+}
+@media (max-width: 800px) {
+  .repro-landing .steps {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .repro-landing .steps-line {
+    display: none;
+  }
+}
+.repro-landing .step {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+.repro-landing .steps-wrap.in-view .step:nth-child(1) {
+  transition-delay: 0.05s;
+}
+.repro-landing .steps-wrap.in-view .step:nth-child(2) {
+  transition-delay: 0.5s;
+}
+.repro-landing .steps-wrap.in-view .step:nth-child(3) {
+  transition-delay: 0.95s;
+}
+.repro-landing .steps-wrap.in-view .step {
+  opacity: 1;
+  transform: translateY(0);
+}
+.repro-landing .step .n {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.repro-landing .step h3 {
+  font-size: 19px;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+.repro-landing .step p {
+  font-size: 14.5px;
+  color: var(--gray);
+  line-height: 1.6;
+  max-width: 32ch;
+}
+
+/* ===== Dark section modifier — alternates with white to build rhythm ===== */
+.repro-landing .dark {
+  background: var(--ink);
+  color: var(--paper);
+}
+.repro-landing .dark .section-head {
+  border-bottom-color: rgba(255, 255, 255, 0.16);
+}
+.repro-landing .dark .section-kicker {
+  color: rgba(237, 234, 224, 0.5);
+}
+/* How-it-works steps on dark */
+.repro-landing .dark .steps-line {
+  background: rgba(255, 255, 255, 0.16);
+}
+.repro-landing .dark .step .n {
+  /* Solid fill matching the section ground so the connector line is masked
+     behind the circle instead of cutting through it. */
+  background: var(--ink);
+  border-color: rgba(237, 234, 224, 0.5);
+  color: var(--paper);
+}
+.repro-landing .dark .step p {
+  color: rgba(237, 234, 224, 0.55);
+}
+/* Rejects grid on dark (if used) */
+.repro-landing .dark .rejects,
+.repro-landing .dark .reject-row,
+.repro-landing .dark .rejects .reject-row:nth-child(odd) {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.repro-landing .dark .reject-copy .body {
+  color: rgba(237, 234, 224, 0.55);
+}
+/* Quotes on dark */
+.repro-landing .dark blockquote .cite {
+  color: rgba(237, 234, 224, 0.55);
+}
+
+/* ===== Studios band ===== */
+.repro-landing .quote-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+@media (max-width: 800px) {
+  .repro-landing .quote-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.repro-landing blockquote {
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 500;
+}
+.repro-landing blockquote .cite {
+  margin-top: 16px;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 12px;
+  color: var(--gray);
+}
+
+/* ===== CTA / waitlist ===== */
+.repro-landing .cta-section {
+  text-align: center;
+  padding: 96px 5vw 100px;
+  border-top: 1px solid var(--line);
+}
+.repro-landing .cta-section h2 {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  max-width: 18ch;
+  margin: 0 auto 18px;
+}
+.repro-landing .cta-section .sub {
+  margin: 0 auto;
+  text-align: center;
+  color: var(--gray);
+}
+.repro-landing .waitlist-form {
+  margin: 36px auto 0;
+  max-width: 460px;
+  display: flex;
+  gap: 0;
+  border: 1.5px solid var(--ink);
+}
+.repro-landing .waitlist-form input[type="email"] {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 14px 16px;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 14px;
+  color: var(--ink);
+}
+.repro-landing .waitlist-form input[type="email"]::placeholder {
+  color: var(--gray);
+}
+.repro-landing .waitlist-form input[type="email"]:focus {
+  outline: none;
+}
+.repro-landing .waitlist-form button {
+  border: none;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0 22px;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.repro-landing .waitlist-form button:hover {
+  background: var(--red);
+}
+.repro-landing .waitlist-msg {
+  margin-top: 14px;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 13px;
+  min-height: 18px;
+}
+.repro-landing .waitlist-msg.ok {
+  color: #1a8a4a;
+}
+.repro-landing .waitlist-msg.err {
+  color: var(--red);
+}
+.repro-landing .count {
+  margin-top: 8px;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11px;
+  color: var(--gray);
+}
+
+.repro-landing footer {
+  border-top: 1px solid var(--line);
+  padding: 28px 5vw;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11.5px;
+  color: var(--gray);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .repro-landing * {
+    transition: none !important;
+  }
+}

@@ -256,6 +256,11 @@ export default function Landing() {
             Turn AI-generated images into{" "}
             <span className="accent">production-ready files</span>.
           </h1>
+          <p className="sub">
+            Vector paths, correct color, right resolution — the format a studio
+            needs, not the one your AI tool gave you. We&apos;re building it now.
+            Get in before launch.
+          </p>
           <div id="waitlist-hero">
             <WaitlistForm
               source="hero"
@@ -263,15 +268,9 @@ export default function Landing() {
               onJoined={setCount}
             />
           </div>
-          <p className="sub">
-            Vector paths, correct color, right resolution — the format a studio
-            needs, not the one your AI tool gave you. We&apos;re building it now.
-            Get in before launch.
-          </p>
-          <div className="microcopy">
-            One email when it ships. No spam, no sharing your address.
-            {countLine ? ` · ${countLine}.` : ""}
-          </div>
+          {countLine ? (
+            <div className="microcopy">{countLine}.</div>
+          ) : null}
         </div>
 
         <div className="demo-stage">

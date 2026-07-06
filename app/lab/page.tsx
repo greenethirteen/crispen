@@ -3,11 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   GoogleAuthProvider,
+  getAdditionalUserInfo,
   onAuthStateChanged,
   signInWithPopup,
   signOut,
   type User,
 } from "firebase/auth";
+
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+  }
+}
 import { firebaseAuth } from "../../lib/firebase-client";
 import CrispenLogo from "../../components/CrispenLogo";
 import "./lab.css";
@@ -178,7 +185,17 @@ export default function LabPage() {
   async function googleSignIn() {
     setError("");
     try {
-      await signInWithPopup(firebaseAuth(), new GoogleAuthProvider());
+      const cred = await signInWithPopup(
+        firebaseAuth(),
+        new GoogleAuthProvider(),
+      );
+      // Google Ads: the conversion action is keyed to a /thanks page view
+      // (from the waitlist era). Report a virtual /thanks pageview on first
+      // ever sign-up so the same conversion keeps working for this funnel.
+      if (getAdditionalUserInfo(cred)?.isNewUser) {
+        window.gtag?.("config", "AW-18301050102", { page_path: "/thanks" });
+        window.gtag?.("event", "sign_up", { method: "google" });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign-in failed");
     }

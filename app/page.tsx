@@ -118,7 +118,7 @@ function WaitlistForm({
 
 export default function Landing() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [zoom, setZoom] = useState(400);
+  const [zoom, setZoom] = useState(220);
 
   const stepsRef = useRef<HTMLDivElement>(null);
   const [stepsInView, setStepsInView] = useState(false);

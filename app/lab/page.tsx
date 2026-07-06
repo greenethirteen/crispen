@@ -189,12 +189,13 @@ export default function LabPage() {
         firebaseAuth(),
         new GoogleAuthProvider(),
       );
-      // Google Ads: the conversion action is keyed to a /thanks page view
-      // (from the waitlist era). Report a virtual /thanks pageview on first
-      // ever sign-up so the same conversion keeps working for this funnel.
+      // Google Ads "Sign-up" conversion — fires once, on first-ever sign-up.
       if (getAdditionalUserInfo(cred)?.isNewUser) {
-        window.gtag?.("config", "AW-18301050102", { page_path: "/thanks" });
-        window.gtag?.("event", "sign_up", { method: "google" });
+        window.gtag?.("event", "conversion", {
+          send_to: "AW-18301050102/s33fCKyQgMwcEPa5z5ZE",
+          value: 1.0,
+          currency: "AED",
+        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign-in failed");

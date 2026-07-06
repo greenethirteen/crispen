@@ -161,8 +161,9 @@
   background: var(--line);
 }
 .repro-landing h1 {
-  /* max sized so "production-ready files." fits one line in the 920px hero */
-  font-size: clamp(44px, 6.8vw, 76px);
+  /* max sized so "into production-ready files." fits one line in the 920px
+     hero — keeps the headline to two lines on desktop */
+  font-size: clamp(44px, 6.2vw, 64px);
   font-weight: 700;
   line-height: 0.98;
   letter-spacing: -0.035em;
@@ -175,7 +176,7 @@
   font-size: clamp(17px, 1.6vw, 21px);
   line-height: 1.5;
   color: rgba(23, 22, 26, 0.6);
-  max-width: 52ch;
+  max-width: 80ch; /* wide enough for the spec line to sit on one line */
   margin-left: auto;
   margin-right: auto;
 }

@@ -338,7 +338,7 @@ export default function LabPage() {
       </header>
 
       <div className="lab-hero">
-        <h1>Flat raster in. Layered, press-ready out.</h1>
+        <h1>AI image in. Press-ready out.</h1>
         <p className="lab-dim">
           RGBA decomposition → 300 DPI resample → ICC-managed CMYK → layered
           PSD + print PDF

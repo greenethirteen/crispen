@@ -134,7 +134,7 @@
 .repro-landing .hero-text {
   position: relative;
   z-index: 1;
-  max-width: 920px;
+  max-width: 1060px;
   margin: 0 auto 64px;
   text-align: center;
 }
@@ -161,15 +161,18 @@
   background: var(--line);
 }
 .repro-landing h1 {
-  /* max sized so "into production-ready files." fits one line in the 920px
-     hero — keeps the headline to two lines on desktop */
-  font-size: clamp(44px, 6.2vw, 64px);
+  /* sized so the headline breaks as three lines on desktop:
+     "Turn AI-generated images / into production-ready / files." */
+  font-size: clamp(44px, 7.4vw, 92px);
   font-weight: 700;
   line-height: 0.98;
   letter-spacing: -0.035em;
 }
 .repro-landing h1 .accent {
   color: var(--red);
+}
+.repro-landing h1 .nb {
+  white-space: nowrap; /* don't split "production-ready" at its hyphen */
 }
 .repro-landing .sub {
   margin-top: 24px;

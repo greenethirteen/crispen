@@ -252,7 +252,10 @@ export default function Landing() {
         <div className="hero-text">
           <h1>
             Turn AI-generated images into{" "}
-            <span className="accent">production-ready files</span>.
+            <span className="accent">
+              <span className="nb">production-ready</span> files
+            </span>
+            .
           </h1>
           <p className="sub">
             Editable vector paths, CMYK color, 300&nbsp;DPI — production files

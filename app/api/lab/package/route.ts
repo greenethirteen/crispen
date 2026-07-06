@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { labAuthorized } from "../../../../lib/lab";
+import { normalizeEmail } from "../../../../lib/credits";
 import { buildPackage } from "../../../../lib/pipeline";
 
 export const runtime = "nodejs";
@@ -16,7 +17,8 @@ function dataUriToBuffer(uri: string): Buffer {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    if (!labAuthorized(body?.password)) {
+    // Packaging is free — the credit was spent on the separation step.
+    if (!labAuthorized(body?.password) && !normalizeEmail(body?.email)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const originalUri = typeof body?.original === "string" ? body.original : "";

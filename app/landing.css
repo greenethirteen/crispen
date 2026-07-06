@@ -161,7 +161,8 @@
   background: var(--line);
 }
 .repro-landing h1 {
-  font-size: clamp(44px, 7.2vw, 92px);
+  /* max sized so "production-ready files." fits one line in the 920px hero */
+  font-size: clamp(44px, 6.8vw, 76px);
   font-weight: 700;
   line-height: 0.98;
   letter-spacing: -0.035em;

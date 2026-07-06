@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import LabProviders from "./providers";
 
 export const metadata: Metadata = {
   title: "Crispen Lab",
@@ -11,5 +10,5 @@ export default function LabLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <LabProviders>{children}</LabProviders>;
+  return children;
 }

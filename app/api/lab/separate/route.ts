@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { labAuthorized, submitSeparation, pollSeparation } from "../../../../lib/lab";
 import { getBalance, refundCredit, spendCredit } from "../../../../lib/credits";
-import { sessionEmail } from "../../../../lib/auth";
+import { bearerEmail } from "../../../../lib/auth";
 
 export const runtime = "nodejs";
 
 /**
  * POST { password?, image (data URI), numLayers? } → { requestId, balance? }
  * Admin password runs free; otherwise the signed-in user pays 1 credit.
- * Identity comes from the session cookie — never from the request body.
+ * Identity comes from the verified Firebase ID token — never from the body.
  */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const isAdmin = labAuthorized(body?.password);
-    const email = isAdmin ? null : await sessionEmail();
+    const email = isAdmin ? null : await bearerEmail(req);
     if (!isAdmin && !email) {
       return NextResponse.json({ error: "Sign in first" }, { status: 401 });
     }
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const authorized =
       labAuthorized(searchParams.get("password")) ||
-      (await sessionEmail()) !== null;
+      (await bearerEmail(req)) !== null;
     if (!authorized) {
       return NextResponse.json({ error: "Sign in first" }, { status: 401 });
     }

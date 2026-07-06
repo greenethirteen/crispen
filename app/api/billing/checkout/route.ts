@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CREDIT_PACKS, PackKey } from "../../../../lib/billing";
 import { createCheckoutSession } from "../../../../lib/stripe";
-import { sessionEmail } from "../../../../lib/auth";
+import { bearerEmail } from "../../../../lib/auth";
 
 export const runtime = "nodejs";
 
 /** POST { pack: "starter" | "studio" } → { url }. Buyer = signed-in user. */
 export async function POST(req: NextRequest) {
   try {
-    const email = await sessionEmail();
+    const email = await bearerEmail(req);
     if (!email) {
       return NextResponse.json({ error: "Sign in first" }, { status: 401 });
     }

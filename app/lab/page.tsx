@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import {
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+  type User,
+} from "firebase/auth";
+import { firebaseAuth } from "../../lib/firebase-client";
 import "./lab.css";
 
 type Phase =
@@ -18,7 +25,8 @@ const STEP_LABELS: Record<string, string> = {
 };
 
 export default function LabPage() {
-  const { data: session, status } = useSession();
+  const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [adminPw, setAdminPw] = useState("");
   const [adminMode, setAdminMode] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
@@ -35,10 +43,16 @@ export default function LabPage() {
   const [zipUrl, setZipUrl] = useState("");
   const dataUriRef = useRef<string>("");
 
-  const signedIn = status === "authenticated";
+  const signedIn = user !== null;
   const unlocked = signedIn || adminMode;
-  const email = session?.user?.email ?? null;
-  const authBody = adminMode ? { password: adminPw } : {};
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(firebaseAuth(), (u) => {
+      setUser(u);
+      setAuthReady(true);
+    });
+    return unsub;
+  }, []);
 
   // Stripe redirect note.
   useEffect(() => {
@@ -51,9 +65,19 @@ export default function LabPage() {
     if (paid) window.history.replaceState(null, "", "/lab");
   }, []);
 
+  /** Fetch with the Firebase ID token (or admin password in the body). */
+  async function authedFetch(url: string, init?: RequestInit) {
+    const headers = new Headers(init?.headers);
+    if (user) {
+      headers.set("Authorization", `Bearer ${await user.getIdToken()}`);
+    }
+    return fetch(url, { ...init, headers });
+  }
+
   async function refreshBalance() {
+    if (!user) return;
     try {
-      const res = await fetch("/api/billing/credits");
+      const res = await authedFetch("/api/billing/credits");
       const j = await res.json();
       if (res.ok) setBalance(j.balance);
     } catch {
@@ -63,6 +87,7 @@ export default function LabPage() {
 
   useEffect(() => {
     if (signedIn) refreshBalance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signedIn]);
 
   // Poll balance briefly after returning from checkout (webhook lag).
@@ -77,10 +102,19 @@ export default function LabPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paidNote, signedIn]);
 
+  async function googleSignIn() {
+    setError("");
+    try {
+      await signInWithPopup(firebaseAuth(), new GoogleAuthProvider());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign-in failed");
+    }
+  }
+
   async function buy(pack: "starter" | "studio") {
     setBuying(pack);
     try {
-      const res = await fetch("/api/billing/checkout", {
+      const res = await authedFetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pack }),
@@ -115,13 +149,14 @@ export default function LabPage() {
     setLayers([]);
     setZipUrl("");
     setPhase("separating");
+    const adminBody = adminMode ? { password: adminPw } : {};
     try {
       // 1) Submit to the separation queue (spends 1 credit unless admin).
-      const submit = await fetch("/api/lab/separate", {
+      const submit = await authedFetch("/api/lab/separate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...authBody,
+          ...adminBody,
           image: dataUriRef.current,
           numLayers,
         }),
@@ -141,7 +176,7 @@ export default function LabPage() {
       let layerUrls: string[] = [];
       for (let i = 0; i < 150; i++) {
         await new Promise((r) => setTimeout(r, 2000));
-        const poll = await fetch(
+        const poll = await authedFetch(
           `/api/lab/separate?id=${encodeURIComponent(submitJson.requestId)}${authQS}`,
         );
         const pollJson = await poll.json();
@@ -163,11 +198,11 @@ export default function LabPage() {
       setPhase("packaging");
 
       // 3) Build the production package (free — credit covered step 1).
-      const pkg = await fetch("/api/lab/package", {
+      const pkg = await authedFetch("/api/lab/package", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...authBody,
+          ...adminBody,
           original: dataUriRef.current,
           layerUrls,
           widthInches,
@@ -186,7 +221,7 @@ export default function LabPage() {
     }
   }
 
-  if (status === "loading" && !adminMode) {
+  if (!authReady && !adminMode) {
     return (
       <main className="lab">
         <div className="lab-gate">
@@ -205,7 +240,7 @@ export default function LabPage() {
           <p className="lab-dim">
             Sign in — your first 3 conversions are free.
           </p>
-          <button className="lab-google" onClick={() => signIn("google")}>
+          <button className="lab-google" onClick={googleSignIn}>
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path
                 fill="#4285F4"
@@ -226,6 +261,7 @@ export default function LabPage() {
             </svg>
             Continue with Google
           </button>
+          {error ? <div className="lab-error">{error}</div> : null}
           {showAdmin ? (
             <form
               onSubmit={(e) => {
@@ -275,10 +311,10 @@ export default function LabPage() {
           <button
             className="lab-signout"
             onClick={() =>
-              adminMode ? setAdminMode(false) : signOut({ callbackUrl: "/lab" })
+              adminMode ? setAdminMode(false) : signOut(firebaseAuth())
             }
           >
-            {adminMode ? "admin" : email} ✕
+            {adminMode ? "admin" : user?.email} ✕
           </button>
         </div>
       </header>
@@ -340,7 +376,7 @@ export default function LabPage() {
           </button>
         </div>
 
-        {error ? <div className="lab-error">{error}</div> : null}
+        {error && unlocked ? <div className="lab-error">{error}</div> : null}
       </section>
 
       {signedIn && balance !== null ? (

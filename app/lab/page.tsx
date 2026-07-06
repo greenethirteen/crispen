@@ -311,6 +311,14 @@ export default function LabPage() {
           <span className="lab-tag mono">LAB</span>
         </div>
         <div className="lab-account">
+          <a
+            className="lab-home mono"
+            href="/"
+            target="_blank"
+            rel="noopener"
+          >
+            Home ↗
+          </a>
           <span className="lab-credits mono">
             {adminMode
               ? "admin"

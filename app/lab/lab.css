@@ -86,6 +86,22 @@
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.04);
 }
+.lab-home {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid var(--line);
+  color: var(--dim);
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+.lab-home:hover {
+  color: var(--paper);
+  border-color: rgba(255, 255, 255, 0.3);
+}
 .lab-signout {
   background: none;
   border: none;

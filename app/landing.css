@@ -134,7 +134,7 @@
 .repro-landing .hero-text {
   position: relative;
   z-index: 1;
-  max-width: 1060px;
+  max-width: 960px;
   margin: 0 auto 64px;
   text-align: center;
 }
@@ -163,7 +163,7 @@
 .repro-landing h1 {
   /* sized so the headline breaks as three lines on desktop:
      "Turn AI-generated images / into production-ready / files." */
-  font-size: clamp(44px, 7.4vw, 92px);
+  font-size: clamp(44px, 7.4vw, 84px);
   font-weight: 700;
   line-height: 0.98;
   letter-spacing: -0.035em;

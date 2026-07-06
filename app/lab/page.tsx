@@ -9,6 +9,7 @@ import {
   type User,
 } from "firebase/auth";
 import { firebaseAuth } from "../../lib/firebase-client";
+import CrispenLogo from "../../components/CrispenLogo";
 import "./lab.css";
 
 type Phase =
@@ -223,9 +224,12 @@ export default function LabPage() {
 
   if (!authReady && !adminMode) {
     return (
-      <main className="lab">
+      <main className="lab lab-centered">
         <div className="lab-gate">
-          <h1>Crispen Lab</h1>
+          <div className="lab-brand">
+            <CrispenLogo className="lab-logo" />
+            <span className="lab-tag mono">LAB</span>
+          </div>
           <p className="lab-dim">Loading…</p>
         </div>
       </main>
@@ -234,12 +238,17 @@ export default function LabPage() {
 
   if (!unlocked) {
     return (
-      <main className="lab">
+      <main className="lab lab-centered">
         <div className="lab-gate">
-          <h1>Crispen Lab</h1>
+          <div className="lab-brand">
+            <CrispenLogo className="lab-logo" />
+            <span className="lab-tag mono">LAB</span>
+          </div>
+          <h1>Turn an AI image into a production-ready package.</h1>
           <p className="lab-dim">
-            Sign in — your first 3 conversions are free.
+            Separated layers · layered PSD · CMYK · print PDF · 300 DPI
           </p>
+          <p className="lab-free mono">Your first 3 conversions are free.</p>
           <button className="lab-google" onClick={googleSignIn}>
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path
@@ -291,14 +300,15 @@ export default function LabPage() {
   const busy = phase === "separating" || phase === "packaging";
   const broke = signedIn && balance !== null && balance < 1;
 
+  const stage =
+    phase === "separating" ? 0 : phase === "packaging" ? 1 : phase === "done" ? 3 : -1;
+
   return (
     <main className="lab">
-      <header className="lab-head">
-        <div>
-          <h1>Crispen Lab</h1>
-          <p className="lab-dim">
-            Image → AI layer separation → 300 DPI → CMYK → PSD + PDF → zip
-          </p>
+      <header className="lab-top">
+        <div className="lab-brand">
+          <CrispenLogo className="lab-logo" />
+          <span className="lab-tag mono">LAB</span>
         </div>
         <div className="lab-account">
           <span className="lab-credits mono">
@@ -318,6 +328,34 @@ export default function LabPage() {
           </button>
         </div>
       </header>
+
+      <div className="lab-hero">
+        <h1>Production pipeline</h1>
+        <p className="lab-dim">
+          Upload an AI-generated image — download a package a studio will
+          accept.
+        </p>
+      </div>
+
+      <ol className="lab-stages" aria-hidden="true">
+        {["AI layer separation", "300 DPI · CMYK", "PSD · PDF · ZIP"].map(
+          (label, i) => (
+            <li
+              key={label}
+              className={
+                stage === 3 || stage > i
+                  ? "done"
+                  : stage === i || (stage === 1 && i === 2)
+                    ? "active"
+                    : ""
+              }
+            >
+              <span className="lab-stage-dot mono">{i + 1}</span>
+              {label}
+            </li>
+          ),
+        )}
+      </ol>
 
       {paidNote ? <div className="lab-note">{paidNote}</div> : null}
 
@@ -415,11 +453,19 @@ export default function LabPage() {
 
       {layers.length > 0 ? (
         <section className="lab-panel">
-          <h2>Separated layers</h2>
+          <h2>
+            Separated layers{" "}
+            <span className="lab-kicker mono">
+              {layers.length} RGBA · editable
+            </span>
+          </h2>
           <div className="lab-layers">
             {layers.map((url, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={url} src={url} alt={`Layer ${i + 1}`} />
+              <figure key={url}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt={`Layer ${i + 1}`} />
+                <figcaption className="mono">L{i + 1}</figcaption>
+              </figure>
             ))}
           </div>
         </section>
@@ -428,11 +474,14 @@ export default function LabPage() {
       {phase === "done" && zipUrl ? (
         <section className="lab-panel lab-done">
           <h2>Production package ready</h2>
-          <p className="lab-dim">
-            Layered PSD · 300 DPI RGBA layers · CMYK artwork · print PDF
-          </p>
+          <div className="lab-manifest mono">
+            <span>working-file.psd</span>
+            <span>layers/ · 300 DPI RGBA</span>
+            <span>print/artwork-cmyk.jpg</span>
+            <span>print/artwork.pdf</span>
+          </div>
           <a href={zipUrl} download="production-package.zip" className="lab-dl">
-            ↓ production-package.zip
+            ↓ Download production-package.zip
           </a>
         </section>
       ) : null}

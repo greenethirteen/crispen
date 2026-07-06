@@ -28,7 +28,7 @@
     #131217;
   color: var(--paper);
   font-family: var(--font-space-grotesk), sans-serif;
-  padding: 0 5vw 110px;
+  padding: 0 5vw 36px;
   border-top: 4px solid transparent;
   border-image: var(--spectrum) 1;
 }
@@ -71,7 +71,7 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 26px 0 0;
+  padding: 18px 0 0;
 }
 .lab-account {
   display: flex;
@@ -81,10 +81,34 @@
 .lab-credits {
   font-size: 13px;
   font-weight: 600;
-  padding: 8px 16px;
+  padding: 8px 8px 8px 16px;
   border-radius: 100px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.04);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.lab-topup {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: none;
+  color: var(--paper);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.lab-topup:hover {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--ink);
 }
 .lab-home {
   font-size: 13px;
@@ -116,10 +140,10 @@
 
 /* ---- hero ---- */
 .lab-hero {
-  padding: 44px 0 6px;
+  padding: 26px 0 2px;
 }
 .lab-hero h1 {
-  font-size: clamp(30px, 4vw, 44px);
+  font-size: clamp(24px, 3vw, 34px);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.02;
@@ -139,13 +163,13 @@
   list-style: none;
   display: flex;
   gap: 10px;
-  padding: 26px 0 22px;
+  padding: 18px 0 14px;
   margin: 0 auto;
   flex-wrap: wrap;
 }
 .lab-stages li {
   flex: 1;
-  min-width: 180px;
+  min-width: 150px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -154,7 +178,7 @@
   color: rgba(237, 234, 224, 0.4);
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: rgba(255, 255, 255, 0.03);
   transition:
     color 0.3s ease,
@@ -207,8 +231,8 @@
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 26px;
-  margin-bottom: 18px;
+  padding: 20px;
+  margin-bottom: 14px;
 }
 .lab-panel::before {
   content: "";
@@ -245,7 +269,7 @@
   justify-content: center;
   border: 1.5px dashed rgba(255, 255, 255, 0.22);
   border-radius: 12px;
-  min-height: 190px;
+  min-height: clamp(140px, calc(100vh - 545px), 420px);
   cursor: pointer;
   overflow: hidden;
   color: var(--dim);
@@ -273,7 +297,7 @@
   display: flex;
   gap: 18px;
   align-items: flex-end;
-  margin-top: 20px;
+  margin-top: 16px;
   flex-wrap: wrap;
 }
 .lab-options label {

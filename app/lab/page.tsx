@@ -32,6 +32,7 @@ export default function LabPage() {
   const [adminMode, setAdminMode] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
+  const [showBuy, setShowBuy] = useState(false);
   const [buying, setBuying] = useState("");
   const [paidNote, setPaidNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -325,6 +326,15 @@ export default function LabPage() {
               : balance === null
                 ? "…"
                 : `${balance} ${balance === 1 ? "credit" : "credits"}`}
+            {!adminMode ? (
+              <button
+                className="lab-topup mono"
+                onClick={() => setShowBuy((v) => !v)}
+                title="Buy credits"
+              >
+                +
+              </button>
+            ) : null}
           </span>
           <button
             className="lab-signout"
@@ -338,10 +348,10 @@ export default function LabPage() {
       </header>
 
       <div className="lab-hero">
-        <h1>Production pipeline</h1>
+        <h1>Flat raster in. Layered, press-ready out.</h1>
         <p className="lab-dim">
-          Upload an AI-generated image — download a package a studio will
-          accept.
+          RGBA decomposition → 300 DPI resample → ICC-managed CMYK → layered
+          PSD + print PDF
         </p>
       </div>
 
@@ -425,7 +435,7 @@ export default function LabPage() {
         {error && unlocked ? <div className="lab-error">{error}</div> : null}
       </section>
 
-      {signedIn && balance !== null ? (
+      {signedIn && balance !== null && (broke || showBuy) ? (
         <section className={`lab-panel lab-buy${broke ? " urgent" : ""}`}>
           <h2>{broke ? "Out of credits" : "Top up"}</h2>
           <div className="lab-packs">

@@ -37,6 +37,7 @@ interface PackageInfo {
   layerNames: string[];
   vectorCount: number;
   report: ReportRow[];
+  notes?: string[];
 }
 
 interface HistoryJob {
@@ -261,7 +262,7 @@ export default function LabPage() {
     setPkg(null);
     setPhase("separating");
     setPct(0);
-    progress(3, 8, "Uploading…", 250);
+    progress(2, 14, "Upload + AI resolution boost…", 1400);
     const adminBody = adminMode ? { password: adminPw } : {};
     try {
       // 1) Submit to the separation queue (spends 1 credit unless admin).
@@ -281,7 +282,8 @@ export default function LabPage() {
       }
       if (!submit.ok) throw new Error(submitJson.error || "Submit failed");
       if (typeof submitJson.balance === "number") setBalance(submitJson.balance);
-      progress(10, 30, "In the AI queue…", 1600);
+      const sourceUrl: string | null = submitJson.sourceUrl ?? null;
+      progress(16, 32, "In the AI queue…", 1600);
 
       // 2) Poll until layers are ready.
       const pollQS = adminMode ? `&${adminQS}` : "";
@@ -322,6 +324,7 @@ export default function LabPage() {
         body: JSON.stringify({
           ...adminBody,
           original: dataUriRef.current,
+          originalUrl: sourceUrl,
           layerUrls,
           widthInches,
         }),
@@ -553,6 +556,16 @@ export default function LabPage() {
                 </div>
               ))}
             </div>
+            {pkg.notes && pkg.notes.length > 0 ? (
+              <div className="lab-notes">
+                <span className="lab-notes-title mono">Production notes</span>
+                {pkg.notes.map((n) => (
+                  <span key={n} className="lab-notes-item">
+                    ⚠ {n}
+                  </span>
+                ))}
+              </div>
+            ) : null}
             <button
               className="lab-dl"
               onClick={() => download(pkg.id, pkg.downloadUrl)}

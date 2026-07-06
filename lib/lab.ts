@@ -24,6 +24,7 @@ function falHeaders(): HeadersInit {
 export async function submitSeparation(
   imageUrl: string,
   numLayers: number,
+  prompt?: string | null,
 ): Promise<{ requestId: string }> {
   const res = await fetch(`${FAL_QUEUE}/${FAL_MODEL}`, {
     method: "POST",
@@ -32,6 +33,7 @@ export async function submitSeparation(
       image_url: imageUrl,
       num_layers: numLayers,
       output_format: "png",
+      ...(prompt ? { prompt } : {}),
       // Reproducible runs; a few extra steps for separation quality
       // (fal bills per output image, not per step).
       seed: 4242,
@@ -43,6 +45,57 @@ export async function submitSeparation(
   }
   const json = (await res.json()) as { request_id: string };
   return { requestId: json.request_id };
+}
+
+const ESRGAN = "fal-ai/esrgan";
+
+/**
+ * AI super-resolution (Real-ESRGAN) so print output gets real detail rather
+ * than interpolation. Runs synchronously (poll in-process); on any failure
+ * returns null and the caller proceeds with the original.
+ */
+export async function upscaleImage(
+  imageUrl: string,
+  scale: 2 | 4,
+): Promise<{ url: string; width: number; height: number } | null> {
+  try {
+    const submit = await fetch(`${FAL_QUEUE}/${ESRGAN}`, {
+      method: "POST",
+      headers: falHeaders(),
+      body: JSON.stringify({
+        image_url: imageUrl,
+        scale,
+        model: "RealESRGAN_x4plus",
+        output_format: "png",
+      }),
+    });
+    if (!submit.ok) return null;
+    const { request_id } = (await submit.json()) as { request_id: string };
+    const base = `${FAL_QUEUE}/${ESRGAN}/requests/${request_id}`;
+    for (let i = 0; i < 45; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const st = await fetch(`${base}/status`, { headers: falHeaders() });
+      if (!st.ok) return null;
+      const { status } = (await st.json()) as { status: string };
+      if (status === "COMPLETED") {
+        const res = await fetch(base, { headers: falHeaders() });
+        if (!res.ok) return null;
+        const json = (await res.json()) as {
+          image?: { url: string; width?: number; height?: number };
+        };
+        if (!json.image?.url) return null;
+        return {
+          url: json.image.url,
+          width: json.image.width ?? 0,
+          height: json.image.height ?? 0,
+        };
+      }
+      if (status !== "IN_QUEUE" && status !== "IN_PROGRESS") return null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export type SeparationStatus =

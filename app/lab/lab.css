@@ -426,6 +426,27 @@
 .lab-keep {
   margin-top: 12px;
 }
+.lab-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 196, 0, 0.35);
+  background: rgba(255, 196, 0, 0.06);
+  border-radius: 10px;
+}
+.lab-notes-title {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+.lab-notes-item {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(237, 234, 224, 0.85);
+}
 @media (max-width: 640px) {
   .lab-report-row {
     grid-template-columns: 1fr;

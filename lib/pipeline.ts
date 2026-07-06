@@ -6,11 +6,23 @@
 // zip package.
 
 import sharp from "sharp";
+import { existsSync, readdirSync } from "fs";
+import path from "path";
 import { writePsdBuffer, type Psd, type Layer } from "ag-psd";
 import { PDFDocument, rgb } from "pdf-lib";
 import JSZip from "jszip";
+import { analyzeLayers } from "./ai";
+import { vectorizeViaApi } from "./vectorize";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ImageTracer = require("imagetracerjs");
+
+/** Press ICC profile (e.g. FOGRA39/ISOcoated) if one is dropped in assets/icc. */
+function pressProfile(): string | null {
+  const dir = path.join(process.cwd(), "assets", "icc");
+  if (!existsSync(dir)) return null;
+  const icc = readdirSync(dir).find((f) => f.toLowerCase().endsWith(".icc"));
+  return icc ? path.join(dir, icc) : null;
+}
 
 const DPI = 300;
 const POINTS_PER_INCH = 72;
@@ -44,6 +56,8 @@ export interface PackageResult {
   recompositeError: number;
   /** Press-check report: what was wrong with the input, what shipped. */
   report: ReportRow[];
+  /** AI production notes (empty without ANTHROPIC_API_KEY). */
+  notes: string[];
   /** Semantic layer names, bottom→top. */
   layerNames: string[];
   vectorCount: number;
@@ -287,7 +301,62 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
 
   // ---- Semantic names (bottom→top, following the chosen order) ----
   const stats = layerProxies.map(layerStats);
-  const layerNames = nameLayers(stats, order);
+  let layerNames = nameLayers(stats, order);
+  let notes: string[] = [];
+
+  // Claude vision upgrade: real names + production notes (fallback-safe).
+  try {
+    const previewPng = (raw: Uint8ClampedArray) =>
+      sharp(Buffer.from(raw.buffer, raw.byteOffset, raw.byteLength), {
+        raw: { width: PROXY_W, height: proxyH, channels: 4 },
+      })
+        .png()
+        .toBuffer();
+    const ai = await analyzeLayers(
+      await previewPng(targetProxy),
+      await Promise.all(order.map((idx) => previewPng(layerProxies[idx]))),
+    );
+    if (ai) {
+      const used = new Set<string>();
+      layerNames = ai.names.map((n) => {
+        let name = n;
+        let i = 2;
+        while (used.has(name)) name = `${n}-${i++}`;
+        used.add(name);
+        return name;
+      });
+      notes = ai.notes;
+    }
+  } catch {
+    /* keep heuristic names */
+  }
+
+  // ---- CMYK gamut check: how much of the art can't survive the press ----
+  // Two separate passes (RGB → CMYK TIFF, then read back to sRGB) — chaining
+  // two toColourspace calls in one pipeline does not round-trip.
+  const pressIcc = pressProfile();
+  const cmykTiff = await sharp(
+    Buffer.from(targetProxy.buffer, targetProxy.byteOffset, targetProxy.byteLength),
+    { raw: { width: PROXY_W, height: proxyH, channels: 4 } },
+  )
+    .flatten({ background: "#ffffff" })
+    .toColourspace("cmyk")
+    .withIccProfile(pressIcc ?? "cmyk")
+    .tiff()
+    .toBuffer();
+  const roundtrip = new Uint8ClampedArray(
+    await sharp(cmykTiff).toColourspace("srgb").ensureAlpha().raw().toBuffer(),
+  );
+  let outOfGamut = 0;
+  for (let i = 0; i < targetProxy.length; i += 4) {
+    const d = Math.max(
+      Math.abs(targetProxy[i] - roundtrip[i]),
+      Math.abs(targetProxy[i + 1] - roundtrip[i + 1]),
+      Math.abs(targetProxy[i + 2] - roundtrip[i + 2]),
+    );
+    if (d > 30) outOfGamut++;
+  }
+  const gamutShare = outOfGamut / (PROXY_W * proxyH);
 
   // ---- Flattened composites at print resolution ----
   // Mild sharpening compensates for resampling softness in print output;
@@ -307,7 +376,7 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
     .sharpen({ sigma: 0.8 })
     .withMetadata({ density: DPI })
     .toColourspace("cmyk")
-    .withIccProfile("cmyk")
+    .withIccProfile(pressIcc ?? "cmyk")
     .jpeg({ quality: 95, chromaSubsampling: "4:4:4" })
     .toBuffer();
 
@@ -375,9 +444,22 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
   const TRACE_W = 1024;
   const traceH = Math.round((heightPx / widthPx) * TRACE_W);
   const vectors: { name: string; svg: string }[] = [];
+  let usedProVectorizer = false;
   for (let pos = 0; pos < order.length; pos++) {
     const idx = order[pos];
     if (!isFlat(layerProxies[idx])) continue;
+    const name = `${String(pos + 1).padStart(2, "0")}-${layerNames[pos]}`;
+    // Pro tracing via vectorizer.ai when configured; imagetracer otherwise.
+    const hiRes = await sharp(input.layers[idx].data)
+      .resize(Math.min(widthPx, 2048))
+      .png()
+      .toBuffer();
+    const pro = await vectorizeViaApi(hiRes);
+    if (pro) {
+      usedProVectorizer = true;
+      vectors.push({ name, svg: pro });
+      continue;
+    }
     const raw = new Uint8ClampedArray(
       await sharp(input.layers[idx].data)
         .resize(TRACE_W, traceH, { fit: "fill" })
@@ -386,7 +468,7 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
         .toBuffer(),
     );
     vectors.push({
-      name: `${String(pos + 1).padStart(2, "0")}-${layerNames[pos]}`,
+      name,
       svg: traceToSvg(raw, TRACE_W, traceH, widthPx / TRACE_W),
     });
   }
@@ -472,8 +554,22 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
     {
       label: "Colour",
       before: inputSpace,
-      after: "CMYK, ICC profile embedded",
+      after: pressIcc
+        ? `CMYK, press profile embedded (${path.basename(pressIcc, ".icc")})`
+        : "CMYK, ICC profile embedded",
       fixed: true,
+    },
+    {
+      label: "Gamut",
+      before:
+        gamutShare > 0.02
+          ? `${(gamutShare * 100).toFixed(0)}% of colours outside CMYK gamut`
+          : "screen colours",
+      after:
+        gamutShare > 0.02
+          ? "mapped to nearest printable — proof saturated areas"
+          : "fully printable — no meaningful gamut loss",
+      fixed: gamutShare <= 0.02,
     },
     {
       label: "Layers",
@@ -486,7 +582,7 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
       before: "none — raster only",
       after:
         vectors.length > 0
-          ? `${vectors.length} flat layer${vectors.length > 1 ? "s" : ""} traced to SVG`
+          ? `${vectors.length} flat layer${vectors.length > 1 ? "s" : ""} traced to SVG${usedProVectorizer ? " (pro tracing)" : ""}`
           : "layers are painterly — kept raster (tracing would degrade them)",
       fixed: vectors.length > 0,
     },
@@ -546,6 +642,9 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
       "",
       "Press check:",
       ...report.map((r) => `  ${r.label}: ${r.before}  ->  ${r.after}`),
+      ...(notes.length > 0
+        ? ["", "Production notes:", ...notes.map((n) => `  - ${n}`)]
+        : []),
       "",
       `Recomposite accuracy: mean deviation ${recompositeError.toFixed(2)}/255`,
       "before correction; pixel-faithful with the accuracy-fix layer.",
@@ -569,6 +668,7 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
     order,
     recompositeError,
     report,
+    notes,
     layerNames,
     vectorCount: vectors.length,
   };

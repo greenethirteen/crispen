@@ -25,9 +25,21 @@ export async function POST(req: NextRequest) {
     if (!isAdmin && !email) {
       return NextResponse.json({ error: "Sign in first" }, { status: 401 });
     }
+    // Prefer the AI-upscaled source (hosted URL from the separate step);
+    // fall back to the client's original data URI.
+    const originalUrl = typeof body?.originalUrl === "string" ? body.originalUrl : "";
     const originalUri = typeof body?.original === "string" ? body.original : "";
-    if (!originalUri.startsWith("data:image/")) {
-      return NextResponse.json({ error: "Send a data-URI original" }, { status: 400 });
+    let original: Buffer;
+    if (originalUrl.startsWith("https://")) {
+      const res = await fetch(originalUrl);
+      if (!res.ok) {
+        return NextResponse.json({ error: "Source fetch failed" }, { status: 502 });
+      }
+      original = Buffer.from(await res.arrayBuffer());
+    } else if (originalUri.startsWith("data:image/")) {
+      original = dataUriToBuffer(originalUri);
+    } else {
+      return NextResponse.json({ error: "Send an original" }, { status: 400 });
     }
     const layerUrls: string[] = Array.isArray(body?.layerUrls)
       ? body.layerUrls.filter((u: unknown) => typeof u === "string")
@@ -49,7 +61,7 @@ export async function POST(req: NextRequest) {
     );
 
     const result = await buildPackage({
-      original: dataUriToBuffer(originalUri),
+      original,
       layers,
       targetWidthInches: widthInches,
     });
@@ -72,6 +84,7 @@ export async function POST(req: NextRequest) {
       vectorCount: result.vectorCount,
       recompositeError: result.recompositeError,
       report: result.report,
+      notes: result.notes,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";

@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { labAuthorized, submitSeparation, pollSeparation } from "../../../../lib/lab";
+import sharp from "sharp";
+import {
+  labAuthorized,
+  submitSeparation,
+  pollSeparation,
+  upscaleImage,
+} from "../../../../lib/lab";
 import { getBalance, refundCredit, spendCredit } from "../../../../lib/credits";
 import { bearerEmail } from "../../../../lib/auth";
+import { captionImage } from "../../../../lib/ai";
 
 export const runtime = "nodejs";
 
@@ -30,13 +37,32 @@ export async function POST(req: NextRequest) {
     }
 
     const numLayers = Math.min(8, Math.max(2, Number(body?.numLayers) || 4));
-    const { requestId } = await submitSeparation(image, numLayers);
+
+    // AI super-resolution first, so separation + packaging inherit real
+    // detail. Skipped for already-large inputs; never blocks the run.
+    const imgBuf = Buffer.from(image.slice(image.indexOf(",") + 1), "base64");
+    const [meta, caption] = await Promise.all([
+      sharp(imgBuf).metadata().catch(() => ({ width: 0 }) as { width?: number }),
+      captionImage(imgBuf),
+    ]);
+    const width = meta.width || 0;
+    let sourceUrl: string | null = null;
+    if (width > 0 && width < 2400) {
+      const upscaled = await upscaleImage(image, width < 1200 ? 4 : 2);
+      if (upscaled) sourceUrl = upscaled.url;
+    }
+
+    const { requestId } = await submitSeparation(
+      sourceUrl ?? image,
+      numLayers,
+      caption,
+    );
 
     let balance: number | undefined;
     if (email) {
       balance = (await spendCredit(email, requestId)) ?? 0;
     }
-    return NextResponse.json({ requestId, balance });
+    return NextResponse.json({ requestId, balance, sourceUrl });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: msg }, { status: 500 });

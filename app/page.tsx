@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import CrispenLogo from "../components/CrispenLogo";
 import ProductionShowcase from "../components/ProductionShowcase";
 import "./landing.css";
@@ -36,84 +35,6 @@ function drawShape(
   c.lineWidth = 2 / seed;
   c.stroke();
   c.restore();
-}
-
-/**
- * Inline email capture. POSTs to /api/waitlist, which persists the address
- * server-side and returns the live total. Rendered in both the hero and the
- * closing CTA; `source` records which one converted.
- */
-function WaitlistForm({
-  source,
-  cta,
-  onJoined,
-}: {
-  source: string;
-  cta: string;
-  onJoined: (count: number) => void;
-}) {
-  const [email, setEmail] = useState("");
-  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
-  const [busy, setBusy] = useState(false);
-  const router = useRouter();
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const value = email.trim().toLowerCase();
-    if (!value || !value.includes("@")) {
-      setMsg({ text: "Enter a valid email.", ok: false });
-      return;
-    }
-    setBusy(true);
-    setMsg(null);
-    try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: value, source }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setMsg({ text: data?.error ?? "Something went wrong.", ok: false });
-        setBusy(false);
-      } else {
-        if (typeof data.count === "number") onJoined(data.count);
-        // Navigate to the dedicated confirmation URL — this is the page Google
-        // Ads (and any other tracker) keys the "lead form submitted" conversion
-        // on. Keep `busy` true so the button stays disabled through the redirect.
-        router.push("/thanks");
-      }
-    } catch {
-      setMsg({ text: "Network error — try again in a moment.", ok: false });
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="waitlist-block">
-      <form className="waitlist-form" onSubmit={submit}>
-        <input
-          type="email"
-          placeholder="you@studio.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={busy}
-          required
-          aria-label="Email address"
-        />
-        <button type="submit" disabled={busy}>
-          {busy ? "…" : cta}
-        </button>
-      </form>
-      <div
-        className={`waitlist-msg${msg ? (msg.ok ? " ok" : " err") : ""}`}
-        role="status"
-        aria-live="polite"
-      >
-        {msg?.text ?? ""}
-      </div>
-    </div>
-  );
 }
 
 export default function Landing() {
@@ -232,7 +153,7 @@ export default function Landing() {
 
   const countLine =
     count && count > 0
-      ? `${count.toLocaleString()} ${count === 1 ? "person is" : "people are"} on the waitlist`
+      ? `${count.toLocaleString()} ${count === 1 ? "person" : "people"} signed up early`
       : "";
 
   return (
@@ -243,8 +164,8 @@ export default function Landing() {
           <a href="#how">How it works</a>
           <a href="#package">Under the hood</a>
         </div>
-        <a href="#waitlist" className="btn">
-          Get early access →
+        <a href="/lab" className="btn">
+          Try it free →
         </a>
       </nav>
 
@@ -261,13 +182,11 @@ export default function Landing() {
             Editable vector paths, CMYK color, 300&nbsp;DPI — production files
             studios accept.
           </p>
-          <p className="sub-line">Get in before launch.</p>
-          <div id="waitlist-hero">
-            <WaitlistForm
-              source="hero"
-              cta="Get early access"
-              onJoined={setCount}
-            />
+          <p className="sub-line">3 free conversions. No card required.</p>
+          <div className="hero-ctas">
+            <a href="/lab" className="btn btn-big">
+              Try it free →
+            </a>
           </div>
           {countLine ? (
             <div className="microcopy">{countLine}.</div>
@@ -472,11 +391,15 @@ export default function Landing() {
 
       <section className="cta-section" id="waitlist">
         <div className="eyebrow" style={{ textAlign: "center" }}>
-          Pre-release
+          Free to try
         </div>
-        <h2>Be first when it ships.</h2>
-        <p className="sub">One email at launch. Nothing else.</p>
-        <WaitlistForm source="cta" cta="Notify me" onJoined={setCount} />
+        <h2>Fix your first file free.</h2>
+        <p className="sub">3 free conversions. No card required.</p>
+        <div className="hero-ctas">
+          <a href="/lab" className="btn btn-big">
+            Try it free →
+          </a>
+        </div>
         <div className="count">{countLine}</div>
       </section>
 

@@ -123,6 +123,10 @@
   border-color: var(--ink);
   color: var(--paper);
 }
+.repro-landing .btn.btn-big {
+  font-size: 15px;
+  padding: 17px 34px;
+}
 
 /* ===== Hero (white, centered, minimal) ===== */
 .repro-landing .hero {

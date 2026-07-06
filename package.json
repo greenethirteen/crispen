@@ -12,6 +12,7 @@
   "dependencies": {
     "ag-psd": "^31.0.2",
     "firebase": "^12.15.0",
+    "imagetracerjs": "^1.2.6",
     "jose": "^6.2.3",
     "jszip": "^3.10.1",
     "next": "^14.2.35",

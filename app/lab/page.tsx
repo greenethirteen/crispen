@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
@@ -12,18 +12,37 @@ import { firebaseAuth } from "../../lib/firebase-client";
 import CrispenLogo from "../../components/CrispenLogo";
 import "./lab.css";
 
-type Phase =
-  | "idle"
-  | "separating"
-  | "separated"
-  | "packaging"
-  | "done"
-  | "error";
+type Phase = "idle" | "separating" | "packaging" | "done" | "error";
 
-const STEP_LABELS: Record<string, string> = {
-  separating: "Separating layers (AI)…",
-  packaging: "Building production package…",
-};
+interface ReportRow {
+  label: string;
+  before: string;
+  after: string;
+  fixed: boolean;
+}
+
+interface PackageInfo {
+  id: string;
+  downloadUrl: string;
+  sizeBytes: number;
+  widthIn: number;
+  heightIn: number;
+  layerNames: string[];
+  vectorCount: number;
+  report: ReportRow[];
+}
+
+interface HistoryJob {
+  id: string;
+  createdAt: string;
+  sizeBytes: number;
+  widthIn: number;
+  heightIn: number;
+  layerNames: string[];
+  vectorCount: number;
+}
+
+const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
 export default function LabPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -39,10 +58,16 @@ export default function LabPage() {
   const [numLayers, setNumLayers] = useState(4);
   const [widthInches, setWidthInches] = useState(12);
   const [phase, setPhase] = useState<Phase>("idle");
+  const [pct, setPct] = useState(0);
+  const [pctLabel, setPctLabel] = useState("");
   const [error, setError] = useState("");
   const [layers, setLayers] = useState<string[]>([]);
-  const [zipUrl, setZipUrl] = useState("");
+  const [pkg, setPkg] = useState<PackageInfo | null>(null);
+  const [history, setHistory] = useState<HistoryJob[]>([]);
+  const [downloading, setDownloading] = useState("");
   const dataUriRef = useRef<string>("");
+  const creepRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const signedIn = user !== null;
   const unlocked = signedIn || adminMode;
@@ -66,16 +91,21 @@ export default function LabPage() {
     if (paid) window.history.replaceState(null, "", "/lab");
   }, []);
 
-  /** Fetch with the Firebase ID token (or admin password in the body). */
-  async function authedFetch(url: string, init?: RequestInit) {
-    const headers = new Headers(init?.headers);
-    if (user) {
-      headers.set("Authorization", `Bearer ${await user.getIdToken()}`);
-    }
-    return fetch(url, { ...init, headers });
-  }
+  /** Fetch with the Firebase ID token (or admin password in the query). */
+  const authedFetch = useCallback(
+    async (url: string, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      if (user) {
+        headers.set("Authorization", `Bearer ${await user.getIdToken()}`);
+      }
+      return fetch(url, { ...init, headers });
+    },
+    [user],
+  );
 
-  async function refreshBalance() {
+  const adminQS = adminMode ? `password=${encodeURIComponent(adminPw)}` : "";
+
+  const refreshBalance = useCallback(async () => {
     if (!user) return;
     try {
       const res = await authedFetch("/api/billing/credits");
@@ -84,12 +114,26 @@ export default function LabPage() {
     } catch {
       /* non-fatal */
     }
-  }
+  }, [user, authedFetch]);
+
+  const refreshHistory = useCallback(async () => {
+    if (!unlocked) return;
+    try {
+      const url = adminMode ? `/api/lab/history?${adminQS}` : "/api/lab/history";
+      const res = await authedFetch(url);
+      const j = await res.json();
+      if (res.ok) setHistory(j.jobs);
+    } catch {
+      /* non-fatal */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unlocked, adminMode, user]);
 
   useEffect(() => {
     if (signedIn) refreshBalance();
+    if (unlocked) refreshHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signedIn]);
+  }, [signedIn, unlocked]);
 
   // Poll balance briefly after returning from checkout (webhook lag).
   useEffect(() => {
@@ -100,8 +144,36 @@ export default function LabPage() {
       clearInterval(timer);
       clearTimeout(stop);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paidNote, signedIn]);
+  }, [paidNote, signedIn, refreshBalance]);
+
+  /* ---- progress helpers: jump to a floor, then creep toward a cap ---- */
+  function creep(cap: number, msPerStep: number) {
+    if (creepRef.current) clearInterval(creepRef.current);
+    creepRef.current = setInterval(() => {
+      setPct((p) => (p < cap ? p + 1 : p));
+    }, msPerStep);
+  }
+  function progress(floor: number, cap: number, label: string, msPerStep = 400) {
+    setPct((p) => Math.max(p, floor));
+    setPctLabel(label);
+    creep(cap, msPerStep);
+  }
+  function stopProgress() {
+    if (creepRef.current) clearInterval(creepRef.current);
+    creepRef.current = null;
+  }
+  useEffect(() => stopProgress, []);
+
+  // Scroll to results once the package is ready.
+  useEffect(() => {
+    if (phase === "done" && pkg) {
+      const t = setTimeout(
+        () => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        120,
+      );
+      return () => clearTimeout(t);
+    }
+  }, [phase, pkg]);
 
   async function googleSignIn() {
     setError("");
@@ -133,8 +205,9 @@ export default function LabPage() {
     if (!f) return;
     setFile(f);
     setLayers([]);
-    setZipUrl("");
+    setPkg(null);
     setPhase("idle");
+    setPct(0);
     setError("");
     const reader = new FileReader();
     reader.onload = () => {
@@ -144,12 +217,33 @@ export default function LabPage() {
     reader.readAsDataURL(f);
   }
 
+  async function download(id: string, url: string) {
+    setDownloading(id);
+    try {
+      const full = adminMode ? `${url}${url.includes("?") ? "&" : "?"}${adminQS}` : url;
+      const res = await authedFetch(full);
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "production-package.zip";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Download failed");
+    } finally {
+      setDownloading("");
+    }
+  }
+
   async function run() {
     if (!dataUriRef.current) return;
     setError("");
     setLayers([]);
-    setZipUrl("");
+    setPkg(null);
     setPhase("separating");
+    setPct(0);
+    progress(3, 8, "Uploading…", 250);
     const adminBody = adminMode ? { password: adminPw } : {};
     try {
       // 1) Submit to the separation queue (spends 1 credit unless admin).
@@ -169,19 +263,23 @@ export default function LabPage() {
       }
       if (!submit.ok) throw new Error(submitJson.error || "Submit failed");
       if (typeof submitJson.balance === "number") setBalance(submitJson.balance);
+      progress(10, 30, "In the AI queue…", 1600);
 
       // 2) Poll until layers are ready.
-      const authQS = adminMode
-        ? `&password=${encodeURIComponent(adminPw)}`
-        : "";
+      const pollQS = adminMode ? `&${adminQS}` : "";
       let layerUrls: string[] = [];
+      let sawProgress = false;
       for (let i = 0; i < 150; i++) {
         await new Promise((r) => setTimeout(r, 2000));
         const poll = await authedFetch(
-          `/api/lab/separate?id=${encodeURIComponent(submitJson.requestId)}${authQS}`,
+          `/api/lab/separate?id=${encodeURIComponent(submitJson.requestId)}${pollQS}`,
         );
         const pollJson = await poll.json();
         if (!poll.ok) throw new Error(pollJson.error || "Poll failed");
+        if (pollJson.status === "IN_PROGRESS" && !sawProgress) {
+          sawProgress = true;
+          progress(35, 66, "Separating layers (AI)…", 900);
+        }
         if (pollJson.status === "COMPLETED") {
           layerUrls = pollJson.layers.map((l: { url: string }) => l.url);
           break;
@@ -197,9 +295,10 @@ export default function LabPage() {
       if (layerUrls.length === 0) throw new Error("Timed out waiting for layers");
       setLayers(layerUrls);
       setPhase("packaging");
+      progress(70, 96, "300 DPI · CMYK · PSD · PDF · vectors…", 1100);
 
-      // 3) Build the production package (free — credit covered step 1).
-      const pkg = await authedFetch("/api/lab/package", {
+      // 3) Build + persist the production package (free — credit spent above).
+      const res = await authedFetch("/api/lab/package", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -209,14 +308,16 @@ export default function LabPage() {
           widthInches,
         }),
       });
-      if (!pkg.ok) {
-        const j = await pkg.json().catch(() => ({}));
-        throw new Error(j.error || "Packaging failed");
-      }
-      const blob = await pkg.blob();
-      setZipUrl(URL.createObjectURL(blob));
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || "Packaging failed");
+      stopProgress();
+      setPct(100);
+      setPctLabel("Done");
+      setPkg(j);
       setPhase("done");
+      refreshHistory();
     } catch (err) {
+      stopProgress();
       setError(err instanceof Error ? err.message : "Unknown error");
       setPhase("error");
     }
@@ -300,9 +401,6 @@ export default function LabPage() {
   const busy = phase === "separating" || phase === "packaging";
   const broke = signedIn && balance !== null && balance < 1;
 
-  const stage =
-    phase === "separating" ? 0 : phase === "packaging" ? 1 : phase === "done" ? 3 : -1;
-
   return (
     <main className="lab">
       <header className="lab-top">
@@ -311,12 +409,7 @@ export default function LabPage() {
           <span className="lab-tag mono">LAB</span>
         </div>
         <div className="lab-account">
-          <a
-            className="lab-home mono"
-            href="/"
-            target="_blank"
-            rel="noopener"
-          >
+          <a className="lab-home mono" href="/" target="_blank" rel="noopener">
             Home ↗
           </a>
           <span className="lab-credits mono">
@@ -345,28 +438,9 @@ export default function LabPage() {
         </p>
       </div>
 
-      <ol className="lab-stages" aria-hidden="true">
-        {["AI layer separation", "300 DPI · CMYK", "PSD · PDF · ZIP"].map(
-          (label, i) => (
-            <li
-              key={label}
-              className={
-                stage === 3 || stage > i
-                  ? "done"
-                  : stage === i || (stage === 1 && i === 2)
-                    ? "active"
-                    : ""
-              }
-            >
-              <span className="lab-stage-dot mono">{i + 1}</span>
-              {label}
-            </li>
-          ),
-        )}
-      </ol>
-
       {paidNote ? <div className="lab-note">{paidNote}</div> : null}
 
+      {/* ---------- upload + options ---------- */}
       <section className="lab-panel">
         <label className="lab-drop">
           <input
@@ -415,16 +489,90 @@ export default function LabPage() {
             disabled={!file || busy || broke}
           >
             {busy
-              ? STEP_LABELS[phase]
+              ? "Working…"
               : signedIn
                 ? "Run pipeline (1 credit)"
                 : "Run pipeline"}
           </button>
         </div>
 
-        {error && unlocked ? <div className="lab-error">{error}</div> : null}
+        {busy || phase === "done" ? (
+          <div className="lab-progress" role="progressbar" aria-valuenow={pct}>
+            <div className="lab-progress-top mono">
+              <span>{pctLabel}</span>
+              <span>{pct}%</span>
+            </div>
+            <div className="lab-progress-track">
+              <div className="lab-progress-fill" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        ) : null}
+
+        {error ? <div className="lab-error">{error}</div> : null}
       </section>
 
+      {/* ---------- results ---------- */}
+      <div ref={resultsRef}>
+        {pkg ? (
+          <section className="lab-panel lab-done">
+            <h2>
+              Press check
+              <span className="lab-kicker mono">
+                {pkg.widthIn.toFixed(1)}″ × {pkg.heightIn.toFixed(1)}″ · 300 DPI
+              </span>
+            </h2>
+            <div className="lab-report">
+              {pkg.report.map((r) => (
+                <div className="lab-report-row" key={r.label}>
+                  <span className="lab-report-label mono">{r.label}</span>
+                  <span className="lab-report-before">
+                    <b>✕</b> {r.before}
+                  </span>
+                  <span className="lab-report-arrow mono">→</span>
+                  <span className={`lab-report-after${r.fixed ? " ok" : ""}`}>
+                    <b>{r.fixed ? "✓" : "·"}</b> {r.after}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <button
+              className="lab-dl"
+              onClick={() => download(pkg.id, pkg.downloadUrl)}
+              disabled={downloading !== ""}
+            >
+              {downloading === pkg.id
+                ? "Preparing…"
+                : `↓ Download production-package.zip (${mb(pkg.sizeBytes)})`}
+            </button>
+            <p className="lab-dim lab-keep">
+              Saved to your account — re-download any time from History below.
+            </p>
+          </section>
+        ) : null}
+
+        {layers.length > 0 ? (
+          <section className="lab-panel">
+            <h2>
+              Separated layers{" "}
+              <span className="lab-kicker mono">
+                {layers.length} RGBA · editable
+                {pkg ? ` · ${pkg.layerNames.join(" / ")}` : ""}
+              </span>
+            </h2>
+            <div className="lab-layers">
+              {layers.map((url, i) => (
+                <figure key={url}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt={`Layer ${i + 1}`} />
+                  <figcaption className="mono">L{i + 1}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </div>
+
+      {/* ---------- credits ---------- */}
       {signedIn && balance !== null ? (
         <section className={`lab-panel lab-buy${broke ? " urgent" : ""}`}>
           <h2>{broke ? "Out of credits" : "Top up"}</h2>
@@ -459,38 +607,42 @@ export default function LabPage() {
         </section>
       ) : null}
 
-      {layers.length > 0 ? (
+      {/* ---------- history ---------- */}
+      {history.length > 0 ? (
         <section className="lab-panel">
           <h2>
-            Separated layers{" "}
+            History
             <span className="lab-kicker mono">
-              {layers.length} RGBA · editable
+              packages are kept — refresh-proof
             </span>
           </h2>
-          <div className="lab-layers">
-            {layers.map((url, i) => (
-              <figure key={url}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt={`Layer ${i + 1}`} />
-                <figcaption className="mono">L{i + 1}</figcaption>
-              </figure>
+          <div className="lab-history">
+            {history.map((j) => (
+              <div className="lab-history-row" key={j.id}>
+                <span className="mono lab-history-date">
+                  {new Date(j.createdAt).toLocaleString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+                <span className="lab-history-meta">
+                  {j.widthIn.toFixed(1)}″×{j.heightIn.toFixed(1)}″ ·{" "}
+                  {j.layerNames.length} layers
+                  {j.vectorCount > 0 ? ` · ${j.vectorCount} SVG` : ""} ·{" "}
+                  {mb(j.sizeBytes)}
+                </span>
+                <button
+                  className="lab-history-dl mono"
+                  onClick={() => download(j.id, `/api/lab/download?id=${j.id}`)}
+                  disabled={downloading !== ""}
+                >
+                  {downloading === j.id ? "…" : "↓ zip"}
+                </button>
+              </div>
             ))}
           </div>
-        </section>
-      ) : null}
-
-      {phase === "done" && zipUrl ? (
-        <section className="lab-panel lab-done">
-          <h2>Production package ready</h2>
-          <div className="lab-manifest mono">
-            <span>working-file.psd</span>
-            <span>layers/ · 300 DPI RGBA</span>
-            <span>print/artwork-cmyk.jpg</span>
-            <span>print/artwork.pdf</span>
-          </div>
-          <a href={zipUrl} download="production-package.zip" className="lab-dl">
-            ↓ Download production-package.zip
-          </a>
         </section>
       ) : null}
     </main>

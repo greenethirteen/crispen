@@ -32,6 +32,10 @@ export async function submitSeparation(
       image_url: imageUrl,
       num_layers: numLayers,
       output_format: "png",
+      // Reproducible runs; a few extra steps for separation quality
+      // (fal bills per output image, not per step).
+      seed: 4242,
+      num_inference_steps: 36,
     }),
   });
   if (!res.ok) {

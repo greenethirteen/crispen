@@ -349,6 +349,141 @@
   font-family: var(--font-plex-mono), monospace;
   font-size: 13px;
 }
+
+/* ---- progress ---- */
+.lab-progress {
+  margin-top: 20px;
+}
+.lab-progress-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+.lab-progress-top span:last-child {
+  color: var(--paper);
+  font-weight: 700;
+}
+.lab-progress-track {
+  height: 8px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.lab-progress-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: var(--spectrum);
+  transition: width 0.5s ease;
+}
+
+/* ---- press-check report ---- */
+.lab-report {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 20px;
+}
+.lab-report-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 20px minmax(0, 1.2fr);
+  gap: 10px;
+  align-items: baseline;
+  font-size: 13.5px;
+  line-height: 1.45;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+}
+.lab-report-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.lab-report-before {
+  color: rgba(237, 234, 224, 0.55);
+}
+.lab-report-before b {
+  color: #ff6b61;
+  font-weight: 700;
+  margin-right: 4px;
+}
+.lab-report-arrow {
+  color: var(--dim);
+  text-align: center;
+}
+.lab-report-after b {
+  color: var(--dim);
+  margin-right: 4px;
+}
+.lab-report-after.ok b {
+  color: var(--green);
+  font-weight: 700;
+}
+.lab-keep {
+  margin-top: 12px;
+}
+@media (max-width: 640px) {
+  .lab-report-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .lab-report-arrow {
+    display: none;
+  }
+}
+
+/* ---- history ---- */
+.lab-history {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lab-history-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+}
+.lab-history-date {
+  color: var(--dim);
+  font-size: 12px;
+  flex: none;
+  width: 130px;
+}
+.lab-history-meta {
+  flex: 1;
+  color: rgba(237, 234, 224, 0.75);
+}
+.lab-history-dl {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 7px;
+  color: var(--paper);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+.lab-history-dl:hover:not(:disabled) {
+  background: var(--paper);
+  color: var(--ink);
+}
+.lab-history-dl:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+@media (max-width: 560px) {
+  .lab-history-row {
+    flex-wrap: wrap;
+  }
+}
 .lab-note {
   margin-bottom: 18px;
   padding: 13px 16px;

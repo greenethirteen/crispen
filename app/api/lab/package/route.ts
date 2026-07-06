@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { labAuthorized } from "../../../../lib/lab";
 import { bearerEmail } from "../../../../lib/auth";
 import { buildPackage } from "../../../../lib/pipeline";
+import { saveJob } from "../../../../lib/jobs";
 
 export const runtime = "nodejs";
 
@@ -11,14 +12,17 @@ function dataUriToBuffer(uri: string): Buffer {
 }
 
 /**
- * POST { password, original (data URI), layerUrls: string[], widthInches }
- * → application/zip (the production package)
+ * POST { password?, original (data URI), layerUrls: string[], widthInches }
+ * → JSON { id, downloadUrl, sizeBytes, report, layerNames, vectorCount, … }
+ * The zip itself is persisted on the volume; download is a separate GET.
  */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    const isAdmin = labAuthorized(body?.password);
+    const email = isAdmin ? null : await bearerEmail(req);
     // Packaging is free — the credit was spent on the separation step.
-    if (!labAuthorized(body?.password) && !(await bearerEmail(req))) {
+    if (!isAdmin && !email) {
       return NextResponse.json({ error: "Sign in first" }, { status: 401 });
     }
     const originalUri = typeof body?.original === "string" ? body.original : "";
@@ -50,12 +54,24 @@ export async function POST(req: NextRequest) {
       targetWidthInches: widthInches,
     });
 
-    return new NextResponse(new Uint8Array(result.zip), {
-      headers: {
-        "Content-Type": "application/zip",
-        "Content-Disposition": 'attachment; filename="production-package.zip"',
-        "X-Artwork-Size": `${result.widthIn.toFixed(2)}x${result.heightIn.toFixed(2)}in@300dpi`,
-      },
+    const record = await saveJob(email ?? "__admin__", result.zip, {
+      widthIn: result.widthIn,
+      heightIn: result.heightIn,
+      layerNames: result.layerNames,
+      vectorCount: result.vectorCount,
+      report: result.report,
+    });
+
+    return NextResponse.json({
+      id: record.id,
+      downloadUrl: `/api/lab/download?id=${record.id}`,
+      sizeBytes: record.sizeBytes,
+      widthIn: result.widthIn,
+      heightIn: result.heightIn,
+      layerNames: result.layerNames,
+      vectorCount: result.vectorCount,
+      recompositeError: result.recompositeError,
+      report: result.report,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";

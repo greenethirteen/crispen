@@ -32,7 +32,6 @@ export default function LabPage() {
   const [adminMode, setAdminMode] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
-  const [showBuy, setShowBuy] = useState(false);
   const [buying, setBuying] = useState("");
   const [paidNote, setPaidNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -326,15 +325,6 @@ export default function LabPage() {
               : balance === null
                 ? "…"
                 : `${balance} ${balance === 1 ? "credit" : "credits"}`}
-            {!adminMode ? (
-              <button
-                className="lab-topup mono"
-                onClick={() => setShowBuy((v) => !v)}
-                title="Buy credits"
-              >
-                +
-              </button>
-            ) : null}
           </span>
           <button
             className="lab-signout"
@@ -435,7 +425,7 @@ export default function LabPage() {
         {error && unlocked ? <div className="lab-error">{error}</div> : null}
       </section>
 
-      {signedIn && balance !== null && (broke || showBuy) ? (
+      {signedIn && balance !== null ? (
         <section className={`lab-panel lab-buy${broke ? " urgent" : ""}`}>
           <h2>{broke ? "Out of credits" : "Top up"}</h2>
           <div className="lab-packs">

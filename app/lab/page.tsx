@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import "./lab.css";
 
 type Phase =
@@ -16,12 +17,11 @@ const STEP_LABELS: Record<string, string> = {
   packaging: "Building production package…",
 };
 
-const ADMIN_RE = /^\d{4,}$/; // no "@" → treated as admin password attempt
-
 export default function LabPage() {
-  const [identity, setIdentity] = useState(""); // email, or admin password
-  const [unlocked, setUnlocked] = useState(false);
-  const [gateError, setGateError] = useState("");
+  const { data: session, status } = useSession();
+  const [adminPw, setAdminPw] = useState("");
+  const [adminMode, setAdminMode] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
   const [buying, setBuying] = useState("");
   const [paidNote, setPaidNote] = useState("");
@@ -35,37 +35,25 @@ export default function LabPage() {
   const [zipUrl, setZipUrl] = useState("");
   const dataUriRef = useRef<string>("");
 
-  const isEmail = identity.includes("@");
-  const auth = isEmail ? { email: identity } : { password: identity };
+  const signedIn = status === "authenticated";
+  const unlocked = signedIn || adminMode;
+  const email = session?.user?.email ?? null;
+  const authBody = adminMode ? { password: adminPw } : {};
 
-  // Restore identity after a Stripe redirect; show payment note.
+  // Stripe redirect note.
   useEffect(() => {
-    const saved = window.localStorage.getItem("crispen-lab-id");
-    const params = new URLSearchParams(window.location.search);
-    const paid = params.get("paid");
-    if (saved) {
-      setIdentity(saved);
-      setUnlocked(true);
-    }
+    const paid = new URLSearchParams(window.location.search).get("paid");
     if (paid === "success") {
       setPaidNote("Payment received — your credits are being added.");
     } else if (paid === "cancel") {
       setPaidNote("Checkout cancelled.");
     }
-    if (paid) {
-      window.history.replaceState(null, "", "/lab");
-    }
+    if (paid) window.history.replaceState(null, "", "/lab");
   }, []);
 
-  async function refreshBalance(id: string) {
-    if (!id.includes("@")) {
-      setBalance(null);
-      return;
-    }
+  async function refreshBalance() {
     try {
-      const res = await fetch(
-        `/api/billing/credits?email=${encodeURIComponent(id)}`,
-      );
+      const res = await fetch("/api/billing/credits");
       const j = await res.json();
       if (res.ok) setBalance(j.balance);
     } catch {
@@ -74,51 +62,28 @@ export default function LabPage() {
   }
 
   useEffect(() => {
-    if (unlocked && identity) refreshBalance(identity);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unlocked, identity]);
+    if (signedIn) refreshBalance();
+  }, [signedIn]);
 
   // Poll balance briefly after returning from checkout (webhook lag).
   useEffect(() => {
-    if (!paidNote.startsWith("Payment") || !identity.includes("@")) return;
-    const timer = setInterval(() => refreshBalance(identity), 3000);
+    if (!paidNote.startsWith("Payment") || !signedIn) return;
+    const timer = setInterval(refreshBalance, 3000);
     const stop = setTimeout(() => clearInterval(timer), 30000);
     return () => {
       clearInterval(timer);
       clearTimeout(stop);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paidNote, identity]);
-
-  function enter(e: React.FormEvent) {
-    e.preventDefault();
-    const id = identity.trim().toLowerCase();
-    if (!id) return;
-    if (!id.includes("@") && !ADMIN_RE.test(id)) {
-      setGateError("Enter your email address.");
-      return;
-    }
-    setIdentity(id);
-    setUnlocked(true);
-    setGateError("");
-    window.localStorage.setItem("crispen-lab-id", id);
-  }
-
-  function signOut() {
-    window.localStorage.removeItem("crispen-lab-id");
-    setUnlocked(false);
-    setIdentity("");
-    setBalance(null);
-  }
+  }, [paidNote, signedIn]);
 
   async function buy(pack: "starter" | "studio") {
-    if (!isEmail) return;
     setBuying(pack);
     try {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: identity, pack }),
+        body: JSON.stringify({ pack }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || "Checkout failed");
@@ -156,7 +121,7 @@ export default function LabPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...auth,
+          ...authBody,
           image: dataUriRef.current,
           numLayers,
         }),
@@ -170,14 +135,14 @@ export default function LabPage() {
       if (typeof submitJson.balance === "number") setBalance(submitJson.balance);
 
       // 2) Poll until layers are ready.
-      const authQS = isEmail
-        ? `email=${encodeURIComponent(identity)}`
-        : `password=${encodeURIComponent(identity)}`;
+      const authQS = adminMode
+        ? `&password=${encodeURIComponent(adminPw)}`
+        : "";
       let layerUrls: string[] = [];
       for (let i = 0; i < 150; i++) {
         await new Promise((r) => setTimeout(r, 2000));
         const poll = await fetch(
-          `/api/lab/separate?id=${encodeURIComponent(submitJson.requestId)}&${authQS}`,
+          `/api/lab/separate?id=${encodeURIComponent(submitJson.requestId)}${authQS}`,
         );
         const pollJson = await poll.json();
         if (!poll.ok) throw new Error(pollJson.error || "Poll failed");
@@ -186,10 +151,10 @@ export default function LabPage() {
           break;
         }
         if (pollJson.status === "FAILED") {
-          if (isEmail) refreshBalance(identity); // credit was auto-refunded
+          if (signedIn) refreshBalance(); // credit was auto-refunded
           throw new Error(
             (pollJson.error || "Separation failed") +
-              (isEmail ? " Your credit was refunded." : ""),
+              (signedIn ? " Your credit was refunded." : ""),
           );
         }
       }
@@ -202,7 +167,7 @@ export default function LabPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...auth,
+          ...authBody,
           original: dataUriRef.current,
           layerUrls,
           widthInches,
@@ -221,32 +186,74 @@ export default function LabPage() {
     }
   }
 
+  if (status === "loading" && !adminMode) {
+    return (
+      <main className="lab">
+        <div className="lab-gate">
+          <h1>Crispen Lab</h1>
+          <p className="lab-dim">Loading…</p>
+        </div>
+      </main>
+    );
+  }
+
   if (!unlocked) {
     return (
       <main className="lab">
         <div className="lab-gate">
           <h1>Crispen Lab</h1>
           <p className="lab-dim">
-            Enter your email — your first 3 conversions are free.
+            Sign in — your first 3 conversions are free.
           </p>
-          <form onSubmit={enter}>
-            <input
-              type="text"
-              placeholder="you@studio.com"
-              value={identity}
-              onChange={(e) => setIdentity(e.target.value)}
-              autoFocus
-            />
-            <button type="submit">Enter</button>
-          </form>
-          {gateError ? <div className="lab-error">{gateError}</div> : null}
+          <button className="lab-google" onClick={() => signIn("google")}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path
+                fill="#4285F4"
+                d="M23.5 12.3c0-.9-.1-1.5-.3-2.2H12v4.1h6.5c-.1 1.1-.8 2.7-2.4 3.8l3.6 2.8c2.2-2 3.8-5 3.8-8.5z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.6-2.9c-1 .7-2.4 1.2-4.3 1.2-3.3 0-6.1-2.2-7.1-5.2L1.2 17C3.1 21.1 7.2 24 12 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M4.9 14.2a7.6 7.6 0 0 1 0-4.5L1.2 6.9a12 12 0 0 0 0 10.2l3.7-2.9z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.7c1.9 0 3.1.8 3.8 1.5l2.8-2.8C16.9 1.7 14.5.7 12 .7 7.2.7 3.1 3.5 1.2 7.6l3.7 2.9c1-3 3.8-5.8 7.1-5.8z"
+              />
+            </svg>
+            Continue with Google
+          </button>
+          {showAdmin ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (adminPw) setAdminMode(true);
+              }}
+            >
+              <input
+                type="password"
+                placeholder="Admin password"
+                value={adminPw}
+                onChange={(e) => setAdminPw(e.target.value)}
+                autoFocus
+              />
+              <button type="submit">Enter</button>
+            </form>
+          ) : (
+            <button className="lab-admin-link" onClick={() => setShowAdmin(true)}>
+              admin
+            </button>
+          )}
         </div>
       </main>
     );
   }
 
   const busy = phase === "separating" || phase === "packaging";
-  const broke = isEmail && balance !== null && balance < 1;
+  const broke = signedIn && balance !== null && balance < 1;
 
   return (
     <main className="lab">
@@ -258,16 +265,20 @@ export default function LabPage() {
           </p>
         </div>
         <div className="lab-account">
-          {isEmail ? (
-            <span className="lab-credits mono">
-              {balance === null ? "…" : balance}{" "}
-              {balance === 1 ? "credit" : "credits"}
-            </span>
-          ) : (
-            <span className="lab-credits mono">admin</span>
-          )}
-          <button className="lab-signout" onClick={signOut}>
-            {identity} ✕
+          <span className="lab-credits mono">
+            {adminMode
+              ? "admin"
+              : balance === null
+                ? "…"
+                : `${balance} ${balance === 1 ? "credit" : "credits"}`}
+          </span>
+          <button
+            className="lab-signout"
+            onClick={() =>
+              adminMode ? setAdminMode(false) : signOut({ callbackUrl: "/lab" })
+            }
+          >
+            {adminMode ? "admin" : email} ✕
           </button>
         </div>
       </header>
@@ -323,7 +334,7 @@ export default function LabPage() {
           >
             {busy
               ? STEP_LABELS[phase]
-              : isEmail
+              : signedIn
                 ? "Run pipeline (1 credit)"
                 : "Run pipeline"}
           </button>
@@ -332,7 +343,7 @@ export default function LabPage() {
         {error ? <div className="lab-error">{error}</div> : null}
       </section>
 
-      {isEmail && (broke || balance !== null) ? (
+      {signedIn && balance !== null ? (
         <section className={`lab-panel lab-buy${broke ? " urgent" : ""}`}>
           <h2>{broke ? "Out of credits" : "Top up"}</h2>
           <div className="lab-packs">

@@ -123,6 +123,38 @@
   display: flex;
   gap: 8px;
 }
+.lab-google {
+  margin-top: 24px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lab-google:hover {
+  background: #f1f1f1;
+}
+.lab-admin-link {
+  margin-top: 18px;
+  background: none;
+  border: none;
+  color: rgba(237, 234, 224, 0.3);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 11px;
+  cursor: pointer;
+}
+.lab-admin-link:hover {
+  color: rgba(237, 234, 224, 0.6);
+}
 .lab-gate input,
 .lab-options input,
 .lab-options select {

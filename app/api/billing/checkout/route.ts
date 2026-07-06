@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CREDIT_PACKS, PackKey } from "../../../../lib/billing";
-import { normalizeEmail } from "../../../../lib/credits";
 import { createCheckoutSession } from "../../../../lib/stripe";
+import { sessionEmail } from "../../../../lib/auth";
 
 export const runtime = "nodejs";
 
-/** POST { email, pack: "starter" | "studio" } → { url } (Stripe Checkout) */
+/** POST { pack: "starter" | "studio" } → { url }. Buyer = signed-in user. */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const email = normalizeEmail(body?.email);
+    const email = await sessionEmail();
     if (!email) {
-      return NextResponse.json({ error: "Valid email required" }, { status: 400 });
+      return NextResponse.json({ error: "Sign in first" }, { status: 401 });
     }
+    const body = await req.json();
     const pack = CREDIT_PACKS[body?.pack as PackKey];
     if (!pack) {
       return NextResponse.json({ error: "Unknown pack" }, { status: 400 });

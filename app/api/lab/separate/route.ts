@@ -1,25 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { labAuthorized, submitSeparation, pollSeparation } from "../../../../lib/lab";
-import {
-  getBalance,
-  normalizeEmail,
-  refundCredit,
-  spendCredit,
-} from "../../../../lib/credits";
+import { getBalance, refundCredit, spendCredit } from "../../../../lib/credits";
+import { sessionEmail } from "../../../../lib/auth";
 
 export const runtime = "nodejs";
 
 /**
- * POST { password? | email?, image (data URI), numLayers? } → { requestId, balance? }
- * Admin password runs free; otherwise 1 credit per separation.
+ * POST { password?, image (data URI), numLayers? } → { requestId, balance? }
+ * Admin password runs free; otherwise the signed-in user pays 1 credit.
+ * Identity comes from the session cookie — never from the request body.
  */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const isAdmin = labAuthorized(body?.password);
-    const email = isAdmin ? null : normalizeEmail(body?.email);
+    const email = isAdmin ? null : await sessionEmail();
     if (!isAdmin && !email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Sign in first" }, { status: 401 });
     }
     const image = typeof body?.image === "string" ? body.image : "";
     if (!image.startsWith("data:image/")) {
@@ -46,15 +43,15 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/** GET ?id=…&(password|email)=… → status / layers. Failed runs refund. */
+/** GET ?id=…[&password=…] → status / layers. Failed runs refund. */
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const authorized =
       labAuthorized(searchParams.get("password")) ||
-      normalizeEmail(searchParams.get("email")) !== null;
+      (await sessionEmail()) !== null;
     if (!authorized) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Sign in first" }, { status: 401 });
     }
     const id = searchParams.get("id");
     if (!id) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { labAuthorized } from "../../../../lib/lab";
-import { normalizeEmail } from "../../../../lib/credits";
+import { sessionEmail } from "../../../../lib/auth";
 import { buildPackage } from "../../../../lib/pipeline";
 
 export const runtime = "nodejs";
@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     // Packaging is free — the credit was spent on the separation step.
-    if (!labAuthorized(body?.password) && !normalizeEmail(body?.email)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!labAuthorized(body?.password) && !(await sessionEmail())) {
+      return NextResponse.json({ error: "Sign in first" }, { status: 401 });
     }
     const originalUri = typeof body?.original === "string" ? body.original : "";
     if (!originalUri.startsWith("data:image/")) {

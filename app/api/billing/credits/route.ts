@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getBalance, normalizeEmail } from "../../../../lib/credits";
+import { NextResponse } from "next/server";
+import { getBalance } from "../../../../lib/credits";
+import { sessionEmail } from "../../../../lib/auth";
 
 export const runtime = "nodejs";
 
-/** GET ?email=… → { balance } (grants the free credits on first sight) */
-export async function GET(req: NextRequest) {
-  const email = normalizeEmail(new URL(req.url).searchParams.get("email"));
+/** GET → { balance } for the signed-in user (grants free credits on first sight) */
+export async function GET() {
+  const email = await sessionEmail();
   if (!email) {
-    return NextResponse.json({ error: "Valid email required" }, { status: 400 });
+    return NextResponse.json({ error: "Sign in first" }, { status: 401 });
   }
   return NextResponse.json({ balance: await getBalance(email) });
 }

@@ -78,56 +78,8 @@ export default function ProductionShowcase() {
         </span>
       </div>
 
-      <div className="showcase-grid">
-        {/* ---------- Centerpiece: the vector path drawing itself ---------- */}
-        <div className="vec-stage">
-          <div className="vec-grid" aria-hidden="true" />
-          <svg className="vec" viewBox="-60 -60 120 120" aria-hidden="true">
-            <path className="vfill" d={PATH} />
-            <path
-              className="vpath"
-              d={PATH}
-              pathLength={1}
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <g className="handles">
-              {ANCHORS.flatMap((a, i) =>
-                a.h.map((h, j) => (
-                  <g key={`h${i}-${j}`}>
-                    <line
-                      className="handle"
-                      x1={a.p[0]}
-                      y1={a.p[1]}
-                      x2={h[0]}
-                      y2={h[1]}
-                    />
-                    <circle className="hdot" cx={h[0]} cy={h[1]} r={2.4} />
-                  </g>
-                )),
-              )}
-            </g>
-            {ANCHORS.map((a, i) => (
-              <rect
-                key={`n${i}`}
-                className="node"
-                x={a.p[0] - 3.6}
-                y={a.p[1] - 3.6}
-                width={7.2}
-                height={7.2}
-                rx={1}
-                style={{ fill: a.color, animationDelay: `${1.75 + i * 0.15}s` }}
-              />
-            ))}
-          </svg>
-          <div className="vec-caption mono">
-            Editable Bézier paths · live anchor points
-          </div>
-        </div>
-
-        {/* ---------- Spec cards ---------- */}
-        <div className="specs">
+      {/* ---------- Spec cards ---------- */}
+      <div className="specs">
           <article className="spec">
             <div className="spec-visual layers-viz">
               <span className="layer l1" />
@@ -138,6 +90,62 @@ export default function ProductionShowcase() {
             <p>
               Type, artwork and background isolated on their own layers — pull
               any element for a new format without a recut.
+            </p>
+          </article>
+
+          <article className="spec">
+            <div className="spec-visual">
+              <svg
+                className="vec-mini"
+                viewBox="-60 -60 120 120"
+                aria-hidden="true"
+              >
+                <path className="vfill" d={PATH} />
+                <path
+                  className="vpath"
+                  d={PATH}
+                  pathLength={1}
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <g className="handles">
+                  {ANCHORS.flatMap((a, i) =>
+                    a.h.map((h, j) => (
+                      <g key={`h${i}-${j}`}>
+                        <line
+                          className="handle"
+                          x1={a.p[0]}
+                          y1={a.p[1]}
+                          x2={h[0]}
+                          y2={h[1]}
+                        />
+                        <circle className="hdot" cx={h[0]} cy={h[1]} r={2.4} />
+                      </g>
+                    )),
+                  )}
+                </g>
+                {ANCHORS.map((a, i) => (
+                  <rect
+                    key={`n${i}`}
+                    className="node"
+                    x={a.p[0] - 3.6}
+                    y={a.p[1] - 3.6}
+                    width={7.2}
+                    height={7.2}
+                    rx={1}
+                    style={{
+                      fill: a.color,
+                      animationDelay: `${1.75 + i * 0.15}s`,
+                    }}
+                  />
+                ))}
+              </svg>
+            </div>
+            <h3>Editable Bézier paths</h3>
+            <p>
+              Live anchor points and handles — real vector geometry you can
+              edit in Illustrator, not a traced blob.
             </p>
           </article>
 
@@ -177,7 +185,6 @@ export default function ProductionShowcase() {
               pixelation the moment it goes up on a wall.
             </p>
           </article>
-        </div>
       </div>
 
       {/* ---------- Formats strip ---------- */}

@@ -44,5 +44,44 @@ export async function POST(req: NextRequest) {
   // Newest first.
   entries.sort((a, b) => (b?.ts ?? 0) - (a?.ts ?? 0));
 
-  return NextResponse.json({ ok: true, count: entries.length, entries });
+  // Product usage: signed-up users (credit ledger) and conversions (jobs).
+  let users: { email: string; balance: number; purchased: number }[] = [];
+  let conversions: { owner: string; createdAt: string; sizeBytes: number }[] = [];
+  try {
+    const credits = JSON.parse(
+      await fs.readFile(path.join(process.cwd(), ".data", "credits.json"), "utf8"),
+    );
+    users = Object.entries(credits.emails ?? {}).map(([email, v]) => ({
+      email,
+      balance: (v as { balance: number }).balance,
+      purchased: (v as { purchased: number }).purchased,
+    }));
+  } catch {
+    /* no ledger yet */
+  }
+  try {
+    const jobs = JSON.parse(
+      await fs.readFile(path.join(process.cwd(), ".data", "jobs.json"), "utf8"),
+    );
+    conversions = Object.values(jobs.jobs ?? {})
+      .map((j) => {
+        const job = j as { owner: string; createdAt: string; sizeBytes: number };
+        return {
+          owner: job.owner,
+          createdAt: job.createdAt,
+          sizeBytes: job.sizeBytes,
+        };
+      })
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  } catch {
+    /* no jobs yet */
+  }
+
+  return NextResponse.json({
+    ok: true,
+    count: entries.length,
+    entries,
+    users,
+    conversions,
+  });
 }

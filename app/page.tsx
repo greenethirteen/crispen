@@ -165,7 +165,7 @@ export default function Landing() {
           <a href="#package">Under the hood</a>
         </div>
         <a href="/lab" className="btn">
-          Try it free →
+          Get early access →
         </a>
       </nav>
 
@@ -185,7 +185,7 @@ export default function Landing() {
           <p className="sub-line">3 free conversions. No card required.</p>
           <div className="hero-ctas">
             <a href="/lab" className="btn btn-big">
-              Try it free →
+              Get early access →
             </a>
           </div>
           {countLine ? (
@@ -389,6 +389,40 @@ export default function Landing() {
         </div>
       </section>
 
+      <section id="word">
+        <div className="section-head">
+          <span className="section-num mono">03</span>
+          <h2 className="section-title">Early reactions</h2>
+          <span className="section-kicker">
+            From people who ship print for a living
+          </span>
+        </div>
+        <div className="quotes">
+          <blockquote className="quote">
+            <p>
+              “The problem is very real. Turning AI-generated campaign visuals
+              into usable production assets — I can definitely see the need.
+              The value proposition is clear straight away.”
+            </p>
+            <footer className="mono">
+              Senior Art Director · global creative agency, Dubai
+            </footer>
+          </blockquote>
+          <blockquote className="quote">
+            <p>
+              “Perfect for creators who don’t want to learn the technical
+              process — it gives them exactly what they need, saving the time
+              and costs they’d face at print shops. Most people don’t realize
+              something is wrong until they see the misprinted output. This
+              bridges that gap.”
+            </p>
+            <footer className="mono">
+              Print production specialist · 30 years in prepress
+            </footer>
+          </blockquote>
+        </div>
+      </section>
+
       <section className="cta-section" id="waitlist">
         <div className="eyebrow" style={{ textAlign: "center" }}>
           Free to try
@@ -397,7 +431,7 @@ export default function Landing() {
         <p className="sub">3 free conversions. No card required.</p>
         <div className="hero-ctas">
           <a href="/lab" className="btn btn-big">
-            Try it free →
+            Get early access →
           </a>
         </div>
         <div className="count">{countLine}</div>

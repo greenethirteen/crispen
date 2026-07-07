@@ -759,6 +759,61 @@
 .repro-landing #package .section-num {
   color: var(--red);
 }
+.repro-landing #word .section-num {
+  color: var(--green);
+}
+
+/* ===== Testimonials ===== */
+.repro-landing #word {
+  padding: 88px 5vw 96px;
+}
+.repro-landing .quotes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+@media (max-width: 780px) {
+  .repro-landing .quotes {
+    grid-template-columns: 1fr;
+  }
+}
+.repro-landing .quote {
+  position: relative;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 30px 28px 24px;
+  overflow: hidden;
+}
+.repro-landing .quote::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent, var(--green));
+}
+.repro-landing .quote:nth-child(1) {
+  --accent: var(--cyan);
+}
+.repro-landing .quote:nth-child(2) {
+  --accent: var(--amber);
+}
+.repro-landing .quote p {
+  font-size: clamp(16px, 1.5vw, 19px);
+  line-height: 1.6;
+  color: rgba(23, 22, 26, 0.82);
+  margin: 0 0 18px;
+}
+.repro-landing .quote footer {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
 
 /* ===== Production package showcase ===== */
 .repro-landing .showcase {

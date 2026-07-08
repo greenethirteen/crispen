@@ -184,7 +184,7 @@ export default function ProductionShowcase() {
       <div className="formats">
         <span className="formats-label mono">One package, every format:</span>
         <div className="chips">
-          {["SVG", "PDF/X", "EPS", "AI", "PSD", "PNG"].map((f, i) => (
+          {["SVG", "PDF/X", "AI", "PSD", "PNG"].map((f, i) => (
             <span
               key={f}
               className="chip"

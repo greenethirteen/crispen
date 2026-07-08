@@ -340,7 +340,8 @@ export default function Landing() {
               <span className="dv-chips">
                 <span style={{ transitionDelay: "0.7s" }}>SVG</span>
                 <span style={{ transitionDelay: "0.8s" }}>PDF/X</span>
-                <span style={{ transitionDelay: "0.9s" }}>PSD</span>
+                <span style={{ transitionDelay: "0.9s" }}>AI</span>
+                <span style={{ transitionDelay: "1.0s" }}>PSD</span>
               </span>
               <span className="dv-btn mono">↓ production-package.zip</span>
             </div>

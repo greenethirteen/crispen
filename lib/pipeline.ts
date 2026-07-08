@@ -6,10 +6,17 @@
 // zip package.
 
 import sharp from "sharp";
-import { existsSync, readdirSync } from "fs";
+import { existsSync, readdirSync, readFileSync } from "fs";
 import path from "path";
 import { writePsdBuffer, type Psd, type Layer } from "ag-psd";
-import { PDFDocument, rgb } from "pdf-lib";
+import {
+  PDFDocument,
+  rgb,
+  PDFName,
+  PDFString,
+  PDFDict,
+  PDFRawStream,
+} from "pdf-lib";
 import JSZip from "jszip";
 import { analyzeLayers } from "./ai";
 import { vectorizeViaApi } from "./vectorize";
@@ -269,6 +276,78 @@ function traceToSvg(
       roundcoords: 2,
     },
   ) as string;
+}
+
+/* ---------------- PDF/X-3 conformance ---------------- */
+
+/**
+ * Upgrade a finished pdf-lib document to PDF/X-3:2003 in place: embed the
+ * press ICC as a CMYK OutputIntent, tag the file with the PDF/X version keys
+ * (Info dict + XMP packet), and pin the header to 1.4. Requires a CMYK ICC on
+ * disk — the caller only invokes this when a press profile is present, since a
+ * PDF/X file is invalid without an output intent.
+ */
+function applyPdfX3(pdf: PDFDocument, iccPath: string): void {
+  // ICC goes in as a 4-channel (CMYK) stream, referenced by the output intent.
+  const iccStream = pdf.context.flateStream(readFileSync(iccPath), { N: 4 });
+  const iccRef = pdf.context.register(iccStream);
+  const condition = path.basename(iccPath, path.extname(iccPath));
+  const outputIntent = pdf.context.obj({
+    Type: "OutputIntent",
+    S: "GTS_PDFX",
+    OutputConditionIdentifier: PDFString.of(condition),
+    OutputCondition: PDFString.of(condition),
+    Info: PDFString.of(condition),
+    RegistryName: PDFString.of("http://www.color.org"),
+    DestOutputProfile: iccRef,
+  });
+  pdf.catalog.set(
+    PDFName.of("OutputIntents"),
+    pdf.context.obj([pdf.context.register(outputIntent)]),
+  );
+
+  // Required document info for PDF/X (title + both dates + version keys).
+  const now = new Date();
+  pdf.setTitle("Crispen production artwork");
+  pdf.setProducer("Crispen");
+  pdf.setCreator("Crispen");
+  pdf.setCreationDate(now);
+  pdf.setModificationDate(now);
+  const info = pdf.context.lookup(pdf.context.trailerInfo.Info, PDFDict);
+  info.set(PDFName.of("GTS_PDFXVersion"), PDFString.of("PDF/X-3:2003"));
+  info.set(PDFName.of("GTS_PDFXConformance"), PDFString.of("PDF/X-3:2003"));
+  info.set(PDFName.of("Trapped"), PDFName.of("False"));
+
+  // XMP packet: preflight tools read the PDF/X version from here, not Info.
+  const xmp = `<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+ <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description rdf:about="" xmlns:pdfxid="http://www.npes.org/pdfx/ns/id/">
+   <pdfxid:GTS_PDFXVersion>PDF/X-3:2003</pdfxid:GTS_PDFXVersion>
+  </rdf:Description>
+ </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>`;
+  const xmpBytes = new TextEncoder().encode(xmp);
+  const metaDict = pdf.context.obj({
+    Type: "Metadata",
+    Subtype: "XML",
+    Length: xmpBytes.length,
+  }) as PDFDict;
+  pdf.catalog.set(
+    PDFName.of("Metadata"),
+    pdf.context.register(PDFRawStream.of(metaDict, xmpBytes)),
+  );
+}
+
+/**
+ * Pin the PDF header to the PDF/X-3:2003 base version (1.4). pdf-lib's writer
+ * hardcodes "%PDF-1.7", so we swap the first line after save — same byte
+ * length, so every xref offset stays valid.
+ */
+function pinPdfVersion14(bytes: Uint8Array): Uint8Array {
+  if (bytes[5] === 0x31 && bytes[7] === 0x37) bytes[7] = 0x34; // "1.7" → "1.4"
+  return bytes;
 }
 
 /* ---------------- main build ---------------- */
@@ -538,8 +617,13 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
   page.setTrimBox(off, off, trimW, trimH);
   page.setBleedBox(off - bleed, off - bleed, trimW + 2 * bleed, trimH + 2 * bleed);
   page.setMediaBox(0, 0, pageW, pageH);
-  pdf.setTitle("Crispen production artwork");
-  const pdfBytes = await pdf.save();
+  // With a press ICC on disk the PDF ships as valid PDF/X-3 (FOGRA39 output
+  // intent embedded); without one it stays a plain print PDF.
+  const isPdfX = Boolean(pressIcc);
+  if (pressIcc) applyPdfX3(pdf, pressIcc);
+  else pdf.setTitle("Crispen production artwork");
+  let pdfBytes = await pdf.save();
+  if (isPdfX) pdfBytes = pinPdfVersion14(pdfBytes);
 
   // ---- Press-check report ----
   const inputDpi = Math.round(meta.width / widthIn);
@@ -589,7 +673,7 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
     {
       label: "Print PDF",
       before: "none",
-      after: `trim ${widthIn.toFixed(2)}″×${heightIn.toFixed(2)}″ + ${BLEED_IN}″ bleed + crop marks`,
+      after: `${isPdfX ? "PDF/X-3, " : ""}trim ${widthIn.toFixed(2)}″×${heightIn.toFixed(2)}″ + ${BLEED_IN}″ bleed + crop marks${isPdfX ? ` + ${path.basename(pressIcc!, ".icc")} output intent` : ""}`,
       fixed: true,
     },
   ];
@@ -611,6 +695,8 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
   const printDir = zip.folder("print")!;
   printDir.file("artwork-cmyk.jpg", compositeCmyk);
   printDir.file("artwork.pdf", Buffer.from(pdfBytes));
+  // Illustrator opens PDF-based .ai files; same bytes, .ai extension.
+  printDir.file("artwork.ai", Buffer.from(pdfBytes));
   zip.file("master-rgb.png", compositeRgb);
   zip.file(
     "README.txt",
@@ -635,9 +721,17 @@ export async function buildPackage(input: PackageInput): Promise<PackageResult> 
       "                   the original — hide it while editing layers, show",
       "                   it before final export for maximum fidelity.",
       "print/artwork-cmyk.jpg  Flattened CMYK artwork at print resolution",
-      `print/artwork.pdf  Print PDF: trim + ${BLEED_IN}\" bleed + crop marks,`,
-      "                   TrimBox/BleedBox set (artwork overscaled ~2% to",
-      "                   fill bleed).",
+      isPdfX
+        ? `print/artwork.pdf  PDF/X-3: trim + ${BLEED_IN}\" bleed + crop marks,`
+        : `print/artwork.pdf  Print PDF: trim + ${BLEED_IN}\" bleed + crop marks,`,
+      isPdfX
+        ? `                   TrimBox/BleedBox set, ${path.basename(pressIcc!, ".icc")} ICC`
+        : "                   TrimBox/BleedBox set (artwork overscaled ~2% to",
+      isPdfX
+        ? "                   output intent embedded (art overscaled ~2% to bleed)."
+        : "                   fill bleed).",
+      "print/artwork.ai   Same artwork as an Illustrator-openable file",
+      "                   (PDF-based .ai — open and edit in Illustrator).",
       "master-rgb.png     Flattened RGB master at print resolution",
       "",
       "Press check:",

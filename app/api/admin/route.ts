@@ -47,10 +47,25 @@ export async function POST(req: NextRequest) {
   // Product usage: signed-up users (credit ledger) and conversions (jobs).
   let users: { email: string; balance: number; purchased: number }[] = [];
   let conversions: { owner: string; createdAt: string; sizeBytes: number }[] = [];
+  // Payments as recorded by our webhook — readable even when Stripe isn't.
+  let payments: unknown[] = [];
+  let checkouts: unknown[] = [];
+  let legacySessions = 0;
+  let creditsSpent = 0;
+  let creditsRefunded = 0;
   try {
     const credits = JSON.parse(
       await fs.readFile(path.join(process.cwd(), ".data", "credits.json"), "utf8"),
     );
+    payments = [...(credits.payments ?? [])].reverse();
+    checkouts = [...(credits.checkouts ?? [])].reverse();
+    // Sessions credited before payment details were logged.
+    legacySessions =
+      (credits.processedSessions ?? []).length - (credits.payments ?? []).length;
+    for (const p of Object.values(credits.pending ?? {})) {
+      creditsSpent += 1;
+      if ((p as { refunded: boolean }).refunded) creditsRefunded += 1;
+    }
     users = Object.entries(credits.emails ?? {}).map(([email, v]) => ({
       email,
       balance: (v as { balance: number }).balance,
@@ -83,5 +98,10 @@ export async function POST(req: NextRequest) {
     entries,
     users,
     conversions,
+    payments,
+    checkouts,
+    legacySessions,
+    creditsSpent,
+    creditsRefunded,
   });
 }

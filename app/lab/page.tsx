@@ -134,8 +134,7 @@ export default function LabPage() {
     } catch {
       /* non-fatal */
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unlocked, adminMode, user]);
+  }, [unlocked, adminMode, adminQS, authedFetch]);
 
   useEffect(() => {
     if (signedIn) refreshBalance();

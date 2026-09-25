@@ -16,9 +16,37 @@ interface Ledger {
   pending: Record<string, { email: string; refunded: boolean }>;
   /** Stripe checkout session ids already credited (webhook idempotency). */
   processedSessions: string[];
+  /** Completed payments, as reported by the webhook (our own copy of Stripe). */
+  payments: Payment[];
+  /** Every "buy" click, including ones Stripe refused. */
+  checkouts: CheckoutAttempt[];
 }
 
-const EMPTY: Ledger = { emails: {}, pending: {}, processedSessions: [] };
+export interface Payment {
+  sessionId: string;
+  email: string;
+  credits: number;
+  pack?: string;
+  amountCents?: number;
+  currency?: string;
+  ts: number;
+}
+
+export interface CheckoutAttempt {
+  email: string;
+  pack: string;
+  ok: boolean;
+  error?: string;
+  ts: number;
+}
+
+const EMPTY: Ledger = {
+  emails: {},
+  pending: {},
+  processedSessions: [],
+  payments: [],
+  checkouts: [],
+};
 
 export function normalizeEmail(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
@@ -90,12 +118,21 @@ export async function addPurchasedCredits(
   email: string,
   credits: number,
   sessionId: string,
+  details: { pack?: string; amountCents?: number; currency?: string } = {},
 ): Promise<void> {
   const ledger = await load();
   if (ledger.processedSessions.includes(sessionId)) return;
   ledger.processedSessions.push(sessionId);
+  ledger.payments.push({ sessionId, email, credits, ...details, ts: Date.now() });
   const acct = ensure(ledger, email);
   acct.balance += credits;
   acct.purchased += credits;
+  await save(ledger);
+}
+
+/** Log a checkout attempt (success or Stripe error) for the admin page. */
+export async function logCheckout(attempt: Omit<CheckoutAttempt, "ts">): Promise<void> {
+  const ledger = await load();
+  ledger.checkouts.push({ ...attempt, ts: Date.now() });
   await save(ledger);
 }

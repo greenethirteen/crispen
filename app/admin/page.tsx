@@ -3,10 +3,45 @@
 import { useState } from "react";
 
 type Entry = { email: string; ts: number; source?: string };
+type User = { email: string; balance: number; purchased: number };
+type Conversion = { owner: string; createdAt: string; sizeBytes: number };
+type Payment = {
+  sessionId: string;
+  email: string;
+  credits: number;
+  pack?: string;
+  amountCents?: number;
+  currency?: string;
+  ts: number;
+};
+type Checkout = { email: string; pack: string; ok: boolean; error?: string; ts: number };
+type Data = {
+  entries: Entry[];
+  users: User[];
+  conversions: Conversion[];
+  payments: Payment[];
+  checkouts: Checkout[];
+  legacySessions: number;
+  creditsSpent: number;
+  creditsRefunded: number;
+};
+
+const TABS = ["payments", "checkouts", "users", "conversions", "waitlist"] as const;
+type Tab = (typeof TABS)[number];
+
+const when = (ts: number | string) => (ts ? new Date(ts).toLocaleString() : "—");
+const money = (cents?: number, cur?: string) =>
+  cents == null
+    ? "—"
+    : (cents / 100).toLocaleString(undefined, {
+        style: "currency",
+        currency: (cur ?? "usd").toUpperCase(),
+      });
 
 export default function AdminPage() {
   const [password, setPassword] = useState("");
-  const [entries, setEntries] = useState<Entry[] | null>(null);
+  const [data, setData] = useState<Data | null>(null);
+  const [tab, setTab] = useState<Tab>("payments");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -21,12 +56,12 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        setError(data.error ?? "Wrong password.");
-        setEntries(null);
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setError(json.error ?? "Wrong password.");
+        setData(null);
       } else {
-        setEntries(data.entries as Entry[]);
+        setData(json as Data);
       }
     } catch {
       setError("Network error — try again.");
@@ -36,9 +71,9 @@ export default function AdminPage() {
   };
 
   const copyAll = async () => {
-    if (!entries?.length) return;
+    if (!data?.entries.length) return;
     try {
-      await navigator.clipboard.writeText(entries.map((e) => e.email).join("\n"));
+      await navigator.clipboard.writeText(data.entries.map((e) => e.email).join("\n"));
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -47,16 +82,62 @@ export default function AdminPage() {
   };
 
   const signOut = () => {
-    setEntries(null);
+    setData(null);
     setPassword("");
   };
 
+  const revenue = (data?.payments ?? []).reduce((n, p) => n + (p.amountCents ?? 0), 0);
+  const payers = new Set((data?.users ?? []).filter((u) => u.purchased > 0).map((u) => u.email));
+  const failedCheckouts = (data?.checkouts ?? []).filter((c) => !c.ok).length;
+  const userConversions = (data?.conversions ?? []).filter((c) => c.owner !== "__admin__");
+
+  const stats: [string, string | number][] = data
+    ? [
+        ["Revenue (logged)", money(revenue, data.payments[0]?.currency)],
+        ["Payments", data.payments.length + data.legacySessions],
+        ["Paying users", payers.size],
+        ["Failed checkouts", failedCheckouts],
+        ["Users", data.users.length],
+        ["Conversions (users)", userConversions.length],
+        ["Credits spent / refunded", `${data.creditsSpent} / ${data.creditsRefunded}`],
+        ["Waitlist", data.entries.length],
+      ]
+    : [];
+
+  const table = (cols: string[], rows: React.ReactNode[][], empty: string) =>
+    rows.length === 0 ? (
+      <div className="empty">{empty}</div>
+    ) : (
+      <div className="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              {cols.map((c) => (
+                <th key={c}>{c}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i}>
+                {r.map((cell, j) => (
+                  <td key={j} className={j === 0 ? "email" : "when"}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+
   return (
     <div className="admin">
-      {entries === null ? (
+      {data === null ? (
         <form className="gate" onSubmit={submit}>
           <h1>Crispen admin</h1>
-          <p className="muted">Enter the password to view the waitlist.</p>
+          <p className="muted">Enter the password to view payments, users and the waitlist.</p>
           <input
             type="password"
             inputMode="numeric"
@@ -67,7 +148,7 @@ export default function AdminPage() {
             aria-label="Admin password"
           />
           <button type="submit" disabled={busy}>
-            {busy ? "Checking…" : "View emails"}
+            {busy ? "Checking…" : "Open dashboard"}
           </button>
           {error ? <div className="err">{error}</div> : null}
         </form>
@@ -75,50 +156,118 @@ export default function AdminPage() {
         <div className="dash">
           <div className="dash-head">
             <div>
-              <h1>Waitlist</h1>
+              <h1>Crispen admin</h1>
               <p className="muted">
-                {entries.length}{" "}
-                {entries.length === 1 ? "signup" : "signups"} collected
+                Payments come from our own webhook log, so they show here even when the
+                Stripe dashboard isn&apos;t reachable.
               </p>
             </div>
             <div className="actions">
-              <button onClick={copyAll} disabled={!entries.length}>
-                {copied ? "Copied ✓" : "Copy all emails"}
-              </button>
+              {tab === "waitlist" ? (
+                <button onClick={copyAll} disabled={!data.entries.length}>
+                  {copied ? "Copied ✓" : "Copy all emails"}
+                </button>
+              ) : null}
               <button className="ghost" onClick={signOut}>
                 Sign out
               </button>
             </div>
           </div>
 
-          {entries.length === 0 ? (
-            <div className="empty">No signups yet.</div>
-          ) : (
-            <div className="tablewrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th className="num">#</th>
-                    <th>Email</th>
-                    <th>Added</th>
-                    <th>Source</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {entries.map((e, i) => (
-                    <tr key={e.email + i}>
-                      <td className="num">{entries.length - i}</td>
-                      <td className="email">{e.email}</td>
-                      <td className="when">
-                        {e.ts ? new Date(e.ts).toLocaleString() : "—"}
-                      </td>
-                      <td className="src">{e.source ?? "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <div className="stats">
+            {stats.map(([label, value]) => (
+              <div className="stat" key={label}>
+                <div className="stat-v">{value}</div>
+                <div className="stat-l">{label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="tabs" role="tablist">
+            {TABS.map((t) => (
+              <button
+                key={t}
+                role="tab"
+                aria-selected={tab === t}
+                className={tab === t ? "tab on" : "tab"}
+                onClick={() => setTab(t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          {tab === "payments" ? (
+            <>
+              {data.legacySessions > 0 ? (
+                <p className="muted note">
+                  {data.legacySessions} earlier payment
+                  {data.legacySessions === 1 ? " was" : "s were"} credited before
+                  details were logged. Those buyers still appear under Users with a
+                  purchased count.
+                </p>
+              ) : null}
+              {table(
+                ["Email", "Pack", "Credits", "Amount", "When", "Stripe session"],
+                data.payments.map((p) => [
+                  p.email,
+                  p.pack ?? "—",
+                  p.credits,
+                  money(p.amountCents, p.currency),
+                  when(p.ts),
+                  <span className="src" key="s">{p.sessionId}</span>,
+                ]),
+                "No payments logged yet.",
+              )}
+            </>
+          ) : null}
+
+          {tab === "checkouts"
+            ? table(
+                ["Email", "Pack", "Result", "When"],
+                data.checkouts.map((c) => [
+                  c.email,
+                  c.pack,
+                  c.ok ? (
+                    "Sent to Stripe"
+                  ) : (
+                    <span className="err" key="e">{c.error ?? "Failed"}</span>
+                  ),
+                  when(c.ts),
+                ]),
+                "No one has clicked buy yet.",
+              )
+            : null}
+
+          {tab === "users"
+            ? table(
+                ["Email", "Balance", "Purchased"],
+                [...data.users]
+                  .sort((a, b) => b.purchased - a.purchased)
+                  .map((u) => [u.email, u.balance, u.purchased]),
+                "No users yet.",
+              )
+            : null}
+
+          {tab === "conversions"
+            ? table(
+                ["Owner", "When", "Size"],
+                data.conversions.map((c) => [
+                  c.owner === "__admin__" ? "admin" : c.owner,
+                  when(c.createdAt),
+                  `${(c.sizeBytes / 1e6).toFixed(1)} MB`,
+                ]),
+                "No conversions yet.",
+              )
+            : null}
+
+          {tab === "waitlist"
+            ? table(
+                ["Email", "Added", "Source"],
+                data.entries.map((e) => [e.email, when(e.ts), e.source ?? "—"]),
+                "No signups yet.",
+              )
+            : null}
         </div>
       )}
 
@@ -193,6 +342,17 @@ export default function AdminPage() {
         .when { color: rgba(237,234,224,0.55); white-space: nowrap; }
         .src { color: rgba(237,234,224,0.45); }
         tbody tr:hover { background: rgba(255,255,255,0.03); }
+        .stats {
+          display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          gap: 10px; margin-bottom: 24px;
+        }
+        .stat { background: #201f24; padding: 14px 16px; }
+        .stat-v { font-family: var(--font-space-grotesk), sans-serif; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .stat-l { color: rgba(237,234,224,0.5); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+        .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+        .admin button.tab { background: transparent; color: rgba(237,234,224,0.6); border: 1.5px solid rgba(237,234,224,0.15); padding: 8px 12px; }
+        .admin button.tab.on { background: #edeae0; color: #17161a; border-color: #edeae0; }
+        .note { margin: 0 0 14px; }
         .empty { color: rgba(237,234,224,0.5); padding: 40px 0; }
       `}</style>
     </div>

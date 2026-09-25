@@ -165,7 +165,7 @@ export default function Landing() {
           <a href="#package">Under the hood</a>
         </div>
         <a href="/lab" className="btn">
-          Get early access →
+          Try it →
         </a>
       </nav>
 
@@ -185,7 +185,7 @@ export default function Landing() {
           <p className="sub-line">3 free conversions. No card required.</p>
           <div className="hero-ctas">
             <a href="/lab" className="btn btn-big">
-              Get early access →
+              Try it →
             </a>
           </div>
           {countLine ? (
@@ -432,7 +432,7 @@ export default function Landing() {
         <p className="sub">3 free conversions. No card required.</p>
         <div className="hero-ctas">
           <a href="/lab" className="btn btn-big">
-            Get early access →
+            Try it →
           </a>
         </div>
         <div className="count">{countLine}</div>

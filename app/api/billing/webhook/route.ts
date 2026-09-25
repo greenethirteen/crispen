@@ -16,7 +16,9 @@ export async function POST(req: NextRequest) {
     const session = event.data.object as {
       id: string;
       payment_status?: string;
-      metadata?: { email?: string; credits?: string };
+      amount_total?: number;
+      currency?: string;
+      metadata?: { email?: string; credits?: string; pack?: string };
       customer_details?: { email?: string };
     };
     if (session.payment_status === "paid") {
@@ -25,7 +27,11 @@ export async function POST(req: NextRequest) {
         normalizeEmail(session.customer_details?.email);
       const credits = Number(session.metadata?.credits) || 0;
       if (email && credits > 0) {
-        await addPurchasedCredits(email, credits, session.id);
+        await addPurchasedCredits(email, credits, session.id, {
+          pack: session.metadata?.pack,
+          amountCents: session.amount_total,
+          currency: session.currency,
+        });
       }
     }
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { CREDIT_PACKS, PackKey } from "../../../../lib/billing";
 import { createCheckoutSession } from "../../../../lib/stripe";
 import { bearerEmail } from "../../../../lib/auth";
+import { logCheckout } from "../../../../lib/credits";
 
 export const runtime = "nodejs";
 
@@ -17,13 +18,21 @@ export async function POST(req: NextRequest) {
     if (!pack) {
       return NextResponse.json({ error: "Unknown pack" }, { status: 400 });
     }
-    const url = await createCheckoutSession({
-      priceId: pack.priceId,
-      email,
-      credits: pack.credits,
-      pack: body.pack,
-      baseUrl: new URL(req.url).origin,
-    });
+    let url: string;
+    try {
+      url = await createCheckoutSession({
+        priceId: pack.priceId,
+        email,
+        credits: pack.credits,
+        pack: body.pack,
+        baseUrl: new URL(req.url).origin,
+      });
+    } catch (err) {
+      const error = err instanceof Error ? err.message : "Unknown error";
+      await logCheckout({ email, pack: body.pack, ok: false, error });
+      throw err;
+    }
+    await logCheckout({ email, pack: body.pack, ok: true });
     return NextResponse.json({ url });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
